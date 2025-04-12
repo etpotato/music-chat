@@ -1,3 +1,9 @@
-import { type RouteConfig, index } from "@react-router/dev/routes";
+import { config } from "dotenv";
+import { type RouteConfig, index, route } from "@react-router/dev/routes";
 
-export default [index("routes/home.tsx")] satisfies RouteConfig;
+config();
+
+export default [
+  index("routes/home.tsx"),
+  route("chats/:id", "routes/chat.tsx"),
+] satisfies RouteConfig;
