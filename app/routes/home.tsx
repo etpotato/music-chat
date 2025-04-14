@@ -1,8 +1,8 @@
-import { Form, Link, Outlet, redirect } from "react-router";
-import { nanoid } from "nanoid";
+import { data, Form, Link, Outlet, redirect } from "react-router";
 import { database } from "~/lib/database/index.server";
 import { commitSession, getSession } from "~/lib/sessions/index.server";
 import type { Route } from "./+types/home";
+import { StatusCodes } from "http-status-codes";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -13,20 +13,19 @@ export function meta({}: Route.MetaArgs) {
 
 export async function action({ request }: Route.ActionArgs) {
   const session = await getSession(request.headers.get("Cookie"));
-  let userId = session.get("userId");
-  const newChatId = nanoid();
+  let userId = session.get("user_id");
 
   if (!userId) {
-    userId = nanoid();
-    session.set("userId", userId);
-    await database.set(userId, []);
+    const newUser = await database.createUser({
+      user_agent: request.headers.get("user-agent"),
+    });
+    session.set("user_id", newUser.id);
+    userId = newUser.id;
   }
 
-  const existingChatIds = (await database.get<string[]>(userId)) || [];
-  await database.set(userId, [...existingChatIds, newChatId]);
-  await database.set(newChatId, []);
+  const newChat = await database.createChat({ user_id: userId });
 
-  return redirect(`/chats/${newChatId}`, {
+  return redirect(`/chats/${newChat.id}`, {
     headers: {
       "Set-Cookie": await commitSession(session),
     },
@@ -36,17 +35,18 @@ export async function action({ request }: Route.ActionArgs) {
 export async function loader({ request }: Route.LoaderArgs) {
   const session = await getSession(request.headers.get("Cookie"));
 
-  const userId = session.get("userId");
+  const userId = session.get("user_id");
+
   if (!userId) {
     return { chatIds: [] };
   }
 
-  const chatIds = (await database.get<string[]>(userId)) || [];
-
+  const chats = await database.getUserChats(userId);
+  const chatIds = chats.map((chat) => chat.id);
   return { chatIds };
 }
 
-export default function Home({ actionData, loaderData }: Route.ComponentProps) {
+export default function Home({ loaderData }: Route.ComponentProps) {
   const { chatIds } = loaderData;
 
   return (

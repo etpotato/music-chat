@@ -1,9 +1,10 @@
-import { getSuggestions } from "~/lib/gen-ai/index.server";
-import { Link, redirect, useFetcher } from "react-router";
+import { getRecommendedPlaylist } from "~/lib/gen-ai/index.server";
+import { data, Link, redirect, useFetcher } from "react-router";
 import { database } from "~/lib/database/index.server";
 import { spotifyService } from "~/lib/spotify/index.server";
 import type { Route } from "./+types/chat";
-import { nanoid } from "nanoid";
+import { StatusCodes } from "http-status-codes";
+import { MessageAuthorType, type Track } from "generated/prisma";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -12,86 +13,86 @@ export function meta({}: Route.MetaArgs) {
   ];
 }
 
-type Message = {
-  id: string;
-  text: string;
-  tracks?: string[];
-};
-
 export async function action({ request, params }: Route.ActionArgs) {
   const chatId = params.id;
 
   if (!chatId) {
-    return { error: "Chat ID is required" };
+    throw data("Chat not found", { status: StatusCodes.NOT_FOUND });
   }
 
   const formData = await request.formData();
   const prompt = formData.get("prompt");
 
+  // TODO: add validation
   if (!prompt || typeof prompt !== "string") {
-    return { error: "Prompt is required" };
+    throw data(
+      { error: "prompt is required" },
+      { status: StatusCodes.BAD_REQUEST }
+    );
   }
 
-  const userMessage: Message = { text: prompt, id: nanoid() };
-  await database.set(chatId, [
-    ...(await database.get<Message[]>(chatId)),
-    userMessage,
-  ]);
+  await database.createMessage({
+    chat_id: chatId,
+    text: prompt,
+    author_type: MessageAuthorType.User,
+  });
 
-  console.log("action prompt", prompt);
-  const suggestions = await getSuggestions(prompt);
+  const playlist = await getRecommendedPlaylist(prompt);
 
-  console.log("action suggestions", suggestions);
+  if (!playlist) {
+    await database.createMessage({
+      chat_id: chatId,
+      text: "Could not generate playlist. Please try again",
+      author_type: MessageAuthorType.Robot,
+    });
 
-  const tracks = (
-    await Promise.all(
-      suggestions.flatMap(async (suggestion) => {
-        const track = await spotifyService.getTrack(suggestion);
-        if (track) {
-          return [track.id];
-        }
+    return;
+  }
 
-        return [];
-      })
-    )
-  )
-    .flat()
-    .slice(0, 5);
+  playlist.tracks = await Promise.all(
+    playlist.tracks.map(async (track) => {
+      const spotifyTrack = await spotifyService.getTrack(track);
 
-  const robotMessage: Message = {
-    id: nanoid(),
-    text: "Here are some tracks I found for you",
-    tracks,
-  };
+      if (spotifyTrack) {
+        track.spotify_id = spotifyTrack.id;
+      }
 
-  await database.set(chatId, [
-    ...(await database.get<Message[]>(chatId)),
-    robotMessage,
-  ]);
+      return track;
+    })
+  );
 
-  console.log("messages in acition", await database.get(chatId));
-
-  return { ok: true };
+  await database.createMessageWithPlaylist({
+    message: {
+      chat_id: chatId,
+      text: playlist.description,
+      author_type: MessageAuthorType.Robot,
+    },
+    playlist: {
+      name: playlist.name,
+      description: playlist.description,
+    },
+    tracks: playlist.tracks as unknown as Pick<
+      Track,
+      "name" | "author" | "album" | "release_date" | "spotify_id"
+    >[],
+  });
 }
 
 export async function loader({ params }: Route.LoaderArgs) {
   if (!params.id) {
     return redirect("/");
   }
-  const messages = await database.get<Message[] | undefined>(params.id);
+  const messages = await database.getMessages(params.id);
 
   if (!messages) {
     return redirect("/");
   }
 
-  console.log("messages in loader", messages);
-
   return { messages };
 }
 
-export default function Home({ actionData, loaderData }: Route.ComponentProps) {
+export default function Home({ loaderData }: Route.ComponentProps) {
   const { messages } = loaderData;
-  console.log("messages in component", messages);
 
   const fetcher = useFetcher();
   const isLoading = fetcher.state !== "idle";
@@ -116,12 +117,12 @@ export default function Home({ actionData, loaderData }: Route.ComponentProps) {
         {messages.map((message) => (
           <li key={message.id}>
             <p>{message.text || ""}</p>
-            {message.tracks?.map((id) => (
+            {message.playlist?.tracks?.map(({ spotify_id }) => (
               <iframe
-                key={id}
-                src={`https://open.spotify.com/embed/track/${id}?utm_source=generator`}
+                key={spotify_id}
+                src={`https://open.spotify.com/embed/track/${spotify_id}?utm_source=generator`}
                 width="100%"
-                height="152"
+                // height="152"
                 frameBorder="0"
                 allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
                 loading="lazy"

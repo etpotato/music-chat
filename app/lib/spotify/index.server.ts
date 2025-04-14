@@ -1,5 +1,5 @@
 import { SpotifyApi, type Track } from "@spotify/web-api-ts-sdk";
-import type { Suggestion } from "~/types/suggestion";
+import type { Track as SuggestedTrack } from "~/types/track";
 
 export class SpotifyService {
   private readonly client: SpotifyApi;
@@ -18,11 +18,11 @@ export class SpotifyService {
   public async getTrack({
     name,
     author,
-    date,
+    release_date,
     album,
-  }: Suggestion): Promise<Track | undefined> {
+  }: SuggestedTrack): Promise<Track | undefined> {
     const result = await this.client.search(
-      `${name} artist:${author} year:${date} album:${album}`,
+      `${name} artist:${author} year:${release_date.getFullYear()} album:${album}`,
       ["track"],
       undefined,
       1

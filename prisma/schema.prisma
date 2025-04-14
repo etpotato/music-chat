@@ -1,0 +1,64 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         String   @id @default(uuid())
+  user_agent String?
+  chats      Chat[]
+  created_at DateTime @default(now())
+}
+
+model Chat {
+  id         String    @id @default(uuid())
+  user       User      @relation(fields: [user_id], references: [id])
+  user_id    String
+  messages   Message[]
+  created_at DateTime  @default(now())
+}
+
+model Message {
+  id          String            @id @default(uuid())
+  text        String
+  author_type MessageAuthorType
+  chat        Chat              @relation(fields: [chat_id], references: [id])
+  chat_id     String
+  created_at  DateTime          @default(now())
+  playlist    Playlist?
+}
+
+model Playlist {
+  id          String   @id @default(uuid())
+  name        String
+  description String
+  created_at  DateTime @default(now())
+  tracks      Track[]
+  message     Message  @relation(fields: [message_id], references: [id])
+  message_id  String   @unique
+}
+
+model Track {
+  id           String   @id @default(uuid())
+  name         String
+  author       String
+  album        String
+  release_date DateTime
+  playlist     Playlist @relation(fields: [playlist_id], references: [id])
+  playlist_id  String
+  spotify_id   String?
+  created_at   DateTime @default(now())
+}
+
+enum MessageAuthorType {
+  User
+  Robot
+}

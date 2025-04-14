@@ -1,52 +1,83 @@
-import { GoogleGenAI, Type } from "@google/genai";
-import type { Suggestion } from "~/types/suggestion";
+import { GoogleGenAI, Type, type Schema } from "@google/genai";
+import type { Playlist } from "~/types/playlist";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-export async function getSuggestions(prompt: string): Promise<Suggestion[]> {
+const responseSchema: Schema = {
+  type: Type.OBJECT,
+  properties: {
+    name: {
+      type: Type.STRING,
+      description: "Playlist name",
+      nullable: false,
+    },
+    description: {
+      type: Type.STRING,
+      description: "Playlist description",
+      nullable: false,
+    },
+    tracks: {
+      type: Type.ARRAY,
+      description: "List of songs",
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          author: {
+            type: Type.STRING,
+            description: "Song author",
+            nullable: false,
+          },
+          name: {
+            type: Type.STRING,
+            description: "Song name",
+            nullable: false,
+          },
+          album: {
+            type: Type.STRING,
+            description: "Song album",
+            nullable: false,
+          },
+          release_date: {
+            type: Type.STRING,
+            description: "Song release date",
+            nullable: false,
+          },
+        },
+        required: ["author", "name", "album", "release_date"],
+      },
+      nullable: false,
+      minItems: "10",
+      maxItems: "10",
+    },
+  },
+  required: ["name", "description", "tracks"],
+  description: "Playlist schema",
+};
+
+export async function getRecommendedPlaylist(
+  prompt: string
+): Promise<Playlist | null> {
   const response = await ai.models.generateContent({
     model: "gemini-2.0-flash-lite",
     config: {
       systemInstruction: process.env.GEN_AI_SYSTEM_INSTRUCTIONS,
       temperature: 2,
       responseMimeType: "application/json",
-      responseSchema: {
-        type: Type.ARRAY,
-        description: "List of song suggestions",
-        items: {
-          type: Type.OBJECT,
-          properties: {
-            author: {
-              type: Type.STRING,
-              description: "Song author",
-              nullable: false,
-            },
-            name: {
-              type: Type.STRING,
-              description: "Song name",
-              nullable: false,
-            },
-            album: {
-              type: Type.STRING,
-              description: "Song album",
-              nullable: false,
-            },
-            date: {
-              type: Type.STRING,
-              description: "Song release date",
-              nullable: false,
-            },
-          },
-          required: ["author", "name", "album", "date"],
-        },
-      },
+      responseSchema,
     },
     contents: prompt,
   });
 
   if (!response.text) {
-    return [];
+    return null;
   }
 
-  return JSON.parse(response.text);
+  const parsedResponse = JSON.parse(response.text) as Playlist;
+
+  parsedResponse.tracks = parsedResponse.tracks.map((track) => ({
+    ...track,
+    release_date: new Date(track.release_date),
+  }));
+
+  return parsedResponse;
 }
