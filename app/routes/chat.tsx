@@ -1,10 +1,9 @@
-import { getRecommendedPlaylist } from "~/lib/gen-ai/index.server";
-import { data, Link, redirect, useFetcher } from "react-router";
+import { data, redirect, useFetcher } from "react-router";
 import { database } from "~/lib/database/index.server";
-import { spotifyService } from "~/lib/spotify/index.server";
 import type { Route } from "./+types/chat";
 import { StatusCodes } from "http-status-codes";
-import { MessageAuthorType, type Track } from "generated/prisma";
+import { TextareaWithButton } from "~/components/ui/textarea-with-button";
+import { createUserMessage } from "~/lib/use-cases/create-user-message.server";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -21,61 +20,17 @@ export async function action({ request, params }: Route.ActionArgs) {
   }
 
   const formData = await request.formData();
-  const prompt = formData.get("prompt");
+  const text = formData.get("prompt");
 
   // TODO: add validation
-  if (!prompt || typeof prompt !== "string") {
+  if (!text || typeof text !== "string") {
     throw data(
       { error: "prompt is required" },
       { status: StatusCodes.BAD_REQUEST }
     );
   }
 
-  await database.createMessage({
-    chat_id: chatId,
-    text: prompt,
-    author_type: MessageAuthorType.User,
-  });
-
-  const playlist = await getRecommendedPlaylist(prompt);
-
-  if (!playlist) {
-    await database.createMessage({
-      chat_id: chatId,
-      text: "Could not generate playlist. Please try again",
-      author_type: MessageAuthorType.Robot,
-    });
-
-    return;
-  }
-
-  playlist.tracks = await Promise.all(
-    playlist.tracks.map(async (track) => {
-      const spotifyTrack = await spotifyService.getTrack(track);
-
-      if (spotifyTrack) {
-        track.spotify_id = spotifyTrack.id;
-      }
-
-      return track;
-    })
-  );
-
-  await database.createMessageWithPlaylist({
-    message: {
-      chat_id: chatId,
-      text: playlist.description,
-      author_type: MessageAuthorType.Robot,
-    },
-    playlist: {
-      name: playlist.name,
-      description: playlist.description,
-    },
-    tracks: playlist.tracks as unknown as Pick<
-      Track,
-      "name" | "author" | "album" | "release_date" | "spotify_id"
-    >[],
-  });
+  await createUserMessage({ chatId, text });
 }
 
 export async function loader({ params }: Route.LoaderArgs) {
@@ -99,19 +54,8 @@ export default function Home({ loaderData }: Route.ComponentProps) {
 
   return (
     <>
-      <div>
-        <Link to="/">Home</Link>
-      </div>
-      <fetcher.Form method="POST" className="p-4">
-        <input
-          type="text"
-          name="prompt"
-          className="border-2 p-2"
-          key={fetcher.state}
-        />
-        <button type="submit" className="border-2 p-2" disabled={isLoading}>
-          {isLoading ? "Loading..." : "Submit"}
-        </button>
+      <fetcher.Form method="POST">
+        <TextareaWithButton name="prompt" loading={isLoading} />
       </fetcher.Form>
       <ul>
         {messages.map((message) => (

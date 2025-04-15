@@ -1,4 +1,4 @@
-import { createCookieSessionStorage } from "react-router";
+import { createCookieSessionStorage, type Session } from "react-router";
 
 type SessionData = {
   user_id: string;
@@ -7,6 +7,8 @@ type SessionData = {
 type SessionFlashData = {
   error: string;
 };
+
+export type UserSession = Session<SessionData, SessionFlashData>;
 
 const { getSession, commitSession, destroySession } =
   createCookieSessionStorage<SessionData, SessionFlashData>({

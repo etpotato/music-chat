@@ -9,8 +9,10 @@ import {
 import prisma from "./prisma.server";
 
 class Database {
-  constructor(private readonly client: PrismaClient) {
-    // this.client = new PrismaClient();
+  constructor(private readonly client: PrismaClient) {}
+
+  public async getUserById(id: User["id"]) {
+    return this.client.user.findFirst({ where: { id } });
   }
 
   public async createUser({ user_agent }: Pick<User, "user_agent">) {
@@ -21,17 +23,33 @@ class Database {
     return created;
   }
 
-  public async createChat({ user_id }: Pick<Chat, "user_id">) {
-    const created = await this.client.chat.create({
-      data: { user_id },
+  public async createChatWithMessage({
+    chat,
+    message,
+  }: {
+    chat: Pick<Chat, "user_id" | "name">;
+    message: Pick<Message, "text" | "author_type">;
+  }) {
+    const createdChat = await this.client.chat.create({
+      data: {
+        user_id: chat.user_id,
+        name: chat.name,
+        messages: {
+          create: {
+            text: message.text,
+            author_type: message.author_type,
+          },
+        },
+      },
     });
 
-    return created;
+    return createdChat;
   }
 
   public async getUserChats(user_id: string) {
     const chats = await this.client.chat.findMany({
       where: { user_id },
+      orderBy: { created_at: "desc" },
     });
 
     return chats;
