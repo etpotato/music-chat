@@ -1,8 +1,9 @@
-import { Outlet, useLocation, useParams } from "react-router";
+import { data, Outlet, useLocation, useParams } from "react-router";
 import { database } from "~/lib/database/index.server";
-import { getSession } from "~/lib/sessions/index.server";
+import { commitSession, getSession } from "~/lib/sessions/index.server";
 import type { Route } from "./+types/home";
 import { AppLayout } from "~/components/ui/app-layout";
+import { AuthProvider } from "~/context/AuthContext";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -14,18 +15,32 @@ export function meta({}: Route.MetaArgs) {
 export async function loader({ request }: Route.LoaderArgs) {
   const session = await getSession(request.headers.get("Cookie"));
 
-  const userId = session.get("user_id");
+  let userId = session.get("user_id");
+  const user = userId ? await database.getUserById(userId) : null;
+  const spotifyAuth = Boolean(user?.spotify_cred?.refresh_token);
 
-  if (!userId) {
-    return { chats: [] };
+  if (!user) {
+    const newUser = await database.createUser({
+      user_agent: request.headers.get("user-agent"),
+    });
+    session.set("user_id", newUser.id);
+    userId = newUser.id;
   }
 
-  const chats = await database.getUserChats(userId);
-  return { chats };
+  const chats = userId ? await database.getUserChats(userId) : [];
+
+  return data(
+    { chats, auth: { spotifyAuth } },
+    {
+      headers: {
+        "Set-Cookie": await commitSession(session),
+      },
+    }
+  );
 }
 
 export default function Home({ loaderData }: Route.ComponentProps) {
-  const { chats } = loaderData;
+  const { chats, auth } = loaderData;
   const params = useParams();
   const location = useLocation();
   const activeChatId = location.pathname.startsWith("/chats/")
@@ -33,10 +48,10 @@ export default function Home({ loaderData }: Route.ComponentProps) {
     : undefined;
 
   return (
-    <>
+    <AuthProvider data={auth}>
       <AppLayout chats={chats} activeChatId={activeChatId}>
         <Outlet />
       </AppLayout>
-    </>
+    </AuthProvider>
   );
 }

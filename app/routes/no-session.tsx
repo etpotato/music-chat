@@ -1,11 +1,13 @@
 import { data, redirect, useFetcher } from "react-router";
 import { database } from "~/lib/database/index.server";
-import { commitSession, getSession } from "~/lib/sessions/index.server";
+import { getSession } from "~/lib/sessions/index.server";
 import type { Route } from "./+types/no-session";
 import { InputWithButton } from "~/components/ui/input-with-button";
 import { StatusCodes } from "http-status-codes";
 import { Loader } from "~/components/ui/loader";
 import type { FormEvent } from "react";
+import { getRandomItem } from "~/utils/array";
+import { placeholders } from "~/const";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -16,14 +18,10 @@ export function meta({}: Route.MetaArgs) {
 
 export async function action({ request }: Route.ActionArgs) {
   const session = await getSession(request.headers.get("Cookie"));
-  let userId = session.get("user_id");
+  const userId = session.get("user_id");
 
-  if (!userId || !(await database.getUserById(userId))) {
-    const newUser = await database.createUser({
-      user_agent: request.headers.get("user-agent"),
-    });
-    session.set("user_id", newUser.id);
-    userId = newUser.id;
+  if (!userId) {
+    return redirect("/");
   }
 
   const formData = await request.formData();
@@ -39,14 +37,16 @@ export async function action({ request }: Route.ActionArgs) {
 
   const newChat = await database.createChat({ user_id: userId, name: text });
 
-  return redirect(`/chats/${newChat.id}`, {
-    headers: {
-      "Set-Cookie": await commitSession(session),
-    },
-  });
+  return redirect(`/chats/${newChat.id}`);
 }
 
-export default function NoSession() {
+export async function loader() {
+  const placeholder = getRandomItem(placeholders);
+  return { placeholder };
+}
+
+export default function NoSession({ loaderData }: Route.ComponentProps) {
+  const { placeholder } = loaderData;
   const fetcher = useFetcher();
   const isLoading = fetcher.state !== "idle";
 
@@ -64,7 +64,7 @@ export default function NoSession() {
           {isLoading ? (
             <Loader size="lg" className="mx-auto" />
           ) : (
-            <InputWithButton name="prompt" />
+            <InputWithButton placeholder={placeholder} name="prompt" />
           )}
         </div>
       </fetcher.Form>

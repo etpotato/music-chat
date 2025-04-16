@@ -5,6 +5,8 @@ import {
   type Message,
   type Track,
   type Playlist,
+  Prisma,
+  type SpotifyCred,
 } from "../../../generated/prisma";
 import prisma from "./prisma.server";
 
@@ -12,7 +14,10 @@ class Database {
   constructor(private readonly client: PrismaClient) {}
 
   public async getUserById(id: User["id"]) {
-    return this.client.user.findFirst({ where: { id } });
+    return this.client.user.findFirst({
+      where: { id },
+      include: { spotify_cred: true },
+    });
   }
 
   public async createUser({ user_agent }: Pick<User, "user_agent">) {
@@ -95,6 +100,62 @@ class Database {
     });
 
     return messages;
+  }
+
+  public async getPlaylistById(id: Playlist["id"]) {
+    const playlist = await this.client.playlist.findFirst({ where: { id } });
+
+    return playlist;
+  }
+
+  public async createOrUpdateSpotifyCredForUser(
+    userId: string,
+    { state }: Pick<SpotifyCred, "state">
+  ) {
+    const existing = await this.client.spotifyCred.findFirst({
+      where: { user_id: userId },
+    });
+
+    if (existing) {
+      const updated = await this.client.spotifyCred.update({
+        where: { id: existing.id },
+        data: {
+          state,
+          expires_in: null,
+          scope: null,
+          token_type: null,
+          access_token: null,
+          refresh_token: null,
+        },
+      });
+
+      return updated;
+    }
+
+    const created = this.client.spotifyCred.create({
+      data: { state, user_id: userId },
+    });
+
+    return created;
+  }
+
+  public async updateSpotifyCredByUserId(
+    userId: string,
+    patch: Partial<
+      Pick<
+        SpotifyCred,
+        "code" | "access_token" | "expires_in" | "refresh_token" | "token_type"
+      >
+    >
+  ) {
+    const result = this.client.spotifyCred.update({
+      where: {
+        user_id: userId,
+      },
+      data: patch,
+    });
+
+    return result;
   }
 }
 

@@ -2,6 +2,7 @@ import { createCookieSessionStorage, type Session } from "react-router";
 
 type SessionData = {
   user_id: string;
+  last_active_chat?: string;
 };
 
 type SessionFlashData = {

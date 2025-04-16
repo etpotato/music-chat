@@ -8,4 +8,5 @@ export default [
     index("routes/no-session.tsx"),
     route("chats/:id", "routes/chat.tsx"),
   ]),
+  route("/auth/spotify", "routes/auth-spotify.ts"),
 ] satisfies RouteConfig;
