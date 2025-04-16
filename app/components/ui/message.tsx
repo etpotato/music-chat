@@ -12,16 +12,19 @@ export type MessageProps = {
 
 export function Message({ message }: MessageProps) {
   const isUser = message.author_type === MessageAuthorType.User;
+  const noPlaylist =
+    message.author_type === MessageAuthorType.Robot &&
+    !message.isLoading &&
+    !message.playlist?.tracks.length;
   return (
     <div
-      className={cn(
-        "rounded-2xl py-2 px-3",
-        isUser ? "text-accent bg-accent-foreground" : "border-1 bg-sidebar"
-      )}
+      className={cn("py-2", {
+        ["rounded-2xl px-3 text-accent bg-accent-foreground"]: isUser,
+      })}
     >
       <p className="mb-1">{message.isLoading ? <Loader /> : message.text}</p>
       {message.playlist?.tracks.length ? (
-        <ul className="grid gap-1 py-2 -mx-1">
+        <ul className="grid gap-1 py-2">
           {message.playlist.tracks.map(({ spotify_id }) => (
             <li key={spotify_id}>
               <iframe
@@ -36,10 +39,17 @@ export function Message({ message }: MessageProps) {
             </li>
           ))}
         </ul>
+      ) : noPlaylist ? (
+        <p className="mb-1 text-green-500 text-xs">
+          Your taste is really special, I couldn’t even find the tracks on
+          Spotify! Please try something a bit more accessible
+        </p>
       ) : null}
-      <p className={cn("text-xs opacity-50", { ["text-right"]: isUser })}>
-        {message.created_at.toLocaleTimeString()}
-      </p>
+      {message.isLoading ? null : (
+        <p className={cn("text-xs opacity-50", { ["text-right"]: isUser })}>
+          {message.created_at.toLocaleTimeString()}
+        </p>
+      )}
     </div>
   );
 }

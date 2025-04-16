@@ -54,7 +54,7 @@ const responseSchema: Schema = {
   description: "Playlist schema",
 };
 
-type RecommendedPlaylist = Playlist & { tracks: Track[] };
+export type RecommendedPlaylist = Playlist & { tracks: Track[] };
 
 export async function getRecommendedPlaylist(
   prompt: string

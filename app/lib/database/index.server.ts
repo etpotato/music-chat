@@ -23,23 +23,11 @@ class Database {
     return created;
   }
 
-  public async createChatWithMessage({
-    chat,
-    message,
-  }: {
-    chat: Pick<Chat, "user_id" | "name">;
-    message: Pick<Message, "text" | "author_type">;
-  }) {
+  public async createChat(chat: Pick<Chat, "user_id" | "name">) {
     const createdChat = await this.client.chat.create({
       data: {
         user_id: chat.user_id,
         name: chat.name,
-        messages: {
-          create: {
-            text: message.text,
-            author_type: message.author_type,
-          },
-        },
       },
     });
 

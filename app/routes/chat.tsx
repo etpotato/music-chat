@@ -11,6 +11,7 @@ import {
 import { nanoid } from "nanoid";
 // got broken js on the client when import from "generated/prisma"
 import { MessageAuthorType } from "~/types/message";
+import { useEffect } from "react";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -57,6 +58,18 @@ export default function Home({ loaderData }: Route.ComponentProps) {
   const { messages } = loaderData;
 
   const fetcher = useFetcher();
+
+  useEffect(() => {
+    const prompt = sessionStorage.getItem("prompt");
+    if (prompt) {
+      sessionStorage.removeItem("prompt");
+      const formData = new FormData();
+      formData.set("prompt", prompt);
+
+      fetcher.submit(formData, { method: "POST" });
+    }
+  }, []);
+
   const isLoading = fetcher.state !== "idle";
   const pendingMessages: MessageListProps["messages"] | null =
     fetcher.formData?.get("prompt")

@@ -1,7 +1,23 @@
-export function Loader() {
+import { cn } from "~/lib/utils";
+
+export function Loader({
+  className,
+  size = "sm",
+}: {
+  className?: string;
+  size?: "sm" | "md" | "lg";
+}) {
   return (
     <svg
-      className="block w-8 h-8"
+      className={cn(
+        "block",
+        {
+          ["w-8 h-8"]: size === "sm",
+          ["w-16 h-16"]: size === "md",
+          ["w-32 h-32"]: size === "lg",
+        },
+        className
+      )}
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 200 200"
     >

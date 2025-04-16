@@ -4,7 +4,8 @@ import { commitSession, getSession } from "~/lib/sessions/index.server";
 import type { Route } from "./+types/no-session";
 import { InputWithButton } from "~/components/ui/input-with-button";
 import { StatusCodes } from "http-status-codes";
-import { createNewChatMessage } from "~/lib/use-cases/create-new-chat-message.server";
+import { Loader } from "~/components/ui/loader";
+import type { FormEvent } from "react";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -36,10 +37,7 @@ export async function action({ request }: Route.ActionArgs) {
     );
   }
 
-  const newChat = await createNewChatMessage({
-    chat: { user_id: userId, name: text },
-    message: { text },
-  });
+  const newChat = await database.createChat({ user_id: userId, name: text });
 
   return redirect(`/chats/${newChat.id}`, {
     headers: {
@@ -52,11 +50,22 @@ export default function NoSession() {
   const fetcher = useFetcher();
   const isLoading = fetcher.state !== "idle";
 
+  function handleSubmit(evt: FormEvent<HTMLFormElement>) {
+    evt.preventDefault();
+    const formData = new FormData(evt.currentTarget);
+    sessionStorage.setItem("prompt", formData.get("prompt") as string);
+    fetcher.submit(formData, { method: "POST" });
+  }
+
   return (
     <>
-      <fetcher.Form method="POST">
-        <div className="w-2/3 mx-auto">
-          <InputWithButton name="prompt" loading={isLoading} />
+      <fetcher.Form method="POST" onSubmit={handleSubmit}>
+        <div className="max-w-2/3 mx-auto">
+          {isLoading ? (
+            <Loader size="lg" className="mx-auto" />
+          ) : (
+            <InputWithButton name="prompt" />
+          )}
         </div>
       </fetcher.Form>
     </>

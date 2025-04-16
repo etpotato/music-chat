@@ -8,28 +8,25 @@ export type MessageListProps = {
 };
 
 export function MessageList({ messages }: MessageListProps) {
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const lastMessageRef = useRef<HTMLLIElement>(null);
 
   useEffect(() => {
-    scrollContainerRef.current?.scroll({
-      top: scrollContainerRef.current.scrollHeight,
+    lastMessageRef.current?.scrollIntoView({
       behavior: "smooth",
     });
   }, [messages]);
 
   return (
-    <div
-      ref={scrollContainerRef}
-      className="flex flex-col grow overflow-y-auto pr-2 -mr-2"
-    >
-      <ul className="grid gap-2">
-        {messages.map((message) => (
+    <div className="flex flex-col grow overflow-y-auto pr-2 -mr-2">
+      <ul className="grid gap-4">
+        {messages.map((message, index, arr) => (
           <li
             key={message.id}
-            className={cn("w-[min(90%,60ch)]", {
+            className={cn("w-[90%]", {
               ["ml-auto w-fit max-w-[min(90%,60ch)] min-w-[max(30%,20ch)]"]:
                 message.author_type === MessageAuthorType.User,
             })}
+            ref={index === arr.length - 1 ? lastMessageRef : null}
           >
             <Message message={message} />
           </li>

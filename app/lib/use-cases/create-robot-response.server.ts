@@ -1,7 +1,18 @@
-import { MessageAuthorType, type Chat, type Message } from "generated/prisma";
+import {
+  MessageAuthorType,
+  type Chat,
+  type Message,
+  type Track,
+} from "generated/prisma";
 import { database } from "../database/index.server";
-import { getRecommendedPlaylist } from "../gen-ai/index.server";
+import {
+  getRecommendedPlaylist,
+  type RecommendedPlaylist,
+} from "../gen-ai/index.server";
 import { spotifyService } from "../spotify/index.server";
+
+const TARGET_TRACK_NUMBER = 5;
+const MAX_ATTEMPTS = 3;
 
 export async function createRobotResponse({
   chatId,
@@ -10,40 +21,53 @@ export async function createRobotResponse({
   chatId: Chat["id"];
   text: Message["text"];
 }) {
-  const playlist = await getRecommendedPlaylist(text);
+  let foundTracksCount = 0;
+  let attempts = 0;
+  const tracks: Track[] = [];
+  let playlist: RecommendedPlaylist | null = null;
 
-  if (!playlist) {
-    await database.createMessage({
-      chat_id: chatId,
-      text: "Could not generate playlist. Please try again",
-      author_type: MessageAuthorType.Robot,
-    });
+  while (foundTracksCount < TARGET_TRACK_NUMBER && attempts < MAX_ATTEMPTS) {
+    playlist = await getRecommendedPlaylist(text);
 
-    return;
+    if (!playlist) {
+      await database.createMessage({
+        chat_id: chatId,
+        text: "Could not generate playlist. Please try again",
+        author_type: MessageAuthorType.Robot,
+      });
+
+      return;
+    }
+
+    const newTracks = await Promise.all(
+      playlist.tracks.map(async (track) => {
+        const spotifyTrack = await spotifyService.getTrack(track);
+        const spotify_id = spotifyTrack?.id || null;
+
+        if (spotify_id) {
+          foundTracksCount++;
+        }
+
+        return { ...track, spotify_id: spotifyTrack?.id || null };
+      })
+    );
+
+    tracks.push(...newTracks);
+    attempts++;
   }
 
-  playlist.tracks = await Promise.all(
-    playlist.tracks.map(async (track) => {
-      const spotifyTrack = await spotifyService.getTrack(track);
-
-      if (spotifyTrack) {
-        track.spotify_id = spotifyTrack.id;
-      }
-
-      return track;
-    })
-  );
+  const finalPlaylist = playlist as RecommendedPlaylist;
 
   await database.createMessageWithPlaylist({
     message: {
       chat_id: chatId,
-      text: playlist.description,
+      text: finalPlaylist.description,
       author_type: MessageAuthorType.Robot,
     },
     playlist: {
-      name: playlist.name,
-      description: playlist.description,
+      name: finalPlaylist.name,
+      description: finalPlaylist.description,
     },
-    tracks: playlist.tracks,
+    tracks,
   });
 }

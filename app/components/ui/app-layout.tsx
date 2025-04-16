@@ -35,7 +35,7 @@ export function AppLayout({
                   <SidebarMenuButton
                     variant="outline"
                     asChild
-                    className="justify-center"
+                    className="w-fit flex justify-center items-center min-h-10 min-w-10 mb-1 ml-2 border-1 bg-white"
                   >
                     <Link to="/">+</Link>
                   </SidebarMenuButton>
