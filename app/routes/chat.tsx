@@ -2,8 +2,15 @@ import { data, redirect, useFetcher } from "react-router";
 import { database } from "~/lib/database/index.server";
 import type { Route } from "./+types/chat";
 import { StatusCodes } from "http-status-codes";
-import { TextareaWithButton } from "~/components/ui/textarea-with-button";
+import { InputWithButton } from "~/components/ui/input-with-button";
 import { createUserMessage } from "~/lib/use-cases/create-user-message.server";
+import {
+  MessageList,
+  type MessageListProps,
+} from "~/components/ui/message-list";
+import { nanoid } from "nanoid";
+// got broken js on the client when import from "generated/prisma"
+import { MessageAuthorType } from "~/types/message";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -51,31 +58,35 @@ export default function Home({ loaderData }: Route.ComponentProps) {
 
   const fetcher = useFetcher();
   const isLoading = fetcher.state !== "idle";
+  const pendingMessages: MessageListProps["messages"] | null =
+    fetcher.formData?.get("prompt")
+      ? [
+          {
+            id: nanoid(),
+            created_at: new Date(),
+            text: fetcher.formData.get("prompt") as string,
+            author_type: MessageAuthorType.User,
+          },
+          {
+            id: nanoid(),
+            created_at: new Date(),
+            text: "",
+            author_type: MessageAuthorType.Robot,
+            isLoading: true,
+          },
+        ]
+      : null;
+
+  const optimisticMessages = pendingMessages
+    ? [...messages, ...pendingMessages]
+    : messages;
 
   return (
     <>
-      <fetcher.Form method="POST">
-        <TextareaWithButton name="prompt" loading={isLoading} />
+      <MessageList messages={optimisticMessages} />
+      <fetcher.Form method="POST" className="pt-2">
+        <InputWithButton name="prompt" loading={isLoading} inline />
       </fetcher.Form>
-      <ul>
-        {messages.map((message) => (
-          <li key={message.id}>
-            <p>{message.text || ""}</p>
-            {message.playlist?.tracks?.map(({ spotify_id }) => (
-              <iframe
-                key={spotify_id}
-                src={`https://open.spotify.com/embed/track/${spotify_id}?utm_source=generator`}
-                width="100%"
-                // height="152"
-                frameBorder="0"
-                allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                loading="lazy"
-              ></iframe>
-            ))}
-          </li>
-        ))}
-      </ul>
-      {isLoading ? <p>Loading...</p> : null}
     </>
   );
 }

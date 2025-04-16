@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type, type Schema } from "@google/genai";
-import type { Playlist } from "~/types/playlist";
+import type { Playlist, Track } from "generated/prisma";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
@@ -54,9 +54,11 @@ const responseSchema: Schema = {
   description: "Playlist schema",
 };
 
+type RecommendedPlaylist = Playlist & { tracks: Track[] };
+
 export async function getRecommendedPlaylist(
   prompt: string
-): Promise<Playlist | null> {
+): Promise<RecommendedPlaylist | null> {
   const response = await ai.models.generateContent({
     model: "gemini-2.0-flash-lite",
     config: {
@@ -72,7 +74,7 @@ export async function getRecommendedPlaylist(
     return null;
   }
 
-  const parsedResponse = JSON.parse(response.text) as Playlist;
+  const parsedResponse = JSON.parse(response.text) as RecommendedPlaylist;
 
   parsedResponse.tracks = parsedResponse.tracks.map((track) => ({
     ...track,

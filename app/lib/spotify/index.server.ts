@@ -1,5 +1,5 @@
 import { SpotifyApi, type Track } from "@spotify/web-api-ts-sdk";
-import type { Track as SuggestedTrack } from "~/types/track";
+import type { Track as SuggestedTrack } from "generated/prisma";
 
 export class SpotifyService {
   private readonly client: SpotifyApi;

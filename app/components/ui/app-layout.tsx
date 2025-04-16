@@ -46,9 +46,12 @@ export function AppLayout({
                       isActive={chat.id === activeChatId}
                       asChild
                     >
-                      <Link to={`/chats/${chat.id}`} className="truncate">
-                        {chat.name} - {chat.created_at.toLocaleDateString()}{" "}
-                        {chat.created_at.toLocaleTimeString()}
+                      <Link to={`/chats/${chat.id}`} className="block">
+                        <div className="truncate mb-1">{chat.name}</div>
+                        <div className="ml-auto text-[0.7em] opacity-50">
+                          {chat.created_at.toLocaleDateString()}{" "}
+                          {chat.created_at.toLocaleTimeString()}
+                        </div>
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -58,9 +61,11 @@ export function AppLayout({
           </SidebarGroup>
         </SidebarContent>
       </Sidebar>
-      <main className="grow">
+      <main className="grow h-screen flex flex-col">
         <SidebarTrigger />
-        <div className="p-2">{children}</div>
+        <div className="p-2 pt-0 grow flex flex-col justify-center overflow-hidden">
+          {children}
+        </div>
       </main>
     </SidebarProvider>
   );

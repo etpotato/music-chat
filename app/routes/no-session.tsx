@@ -2,9 +2,9 @@ import { data, redirect, useFetcher } from "react-router";
 import { database } from "~/lib/database/index.server";
 import { commitSession, getSession } from "~/lib/sessions/index.server";
 import type { Route } from "./+types/no-session";
-import { TextareaWithButton } from "~/components/ui/textarea-with-button";
+import { InputWithButton } from "~/components/ui/input-with-button";
 import { StatusCodes } from "http-status-codes";
-import { createNewChatMessage } from "~/lib/use-cases/create-new-chat-message";
+import { createNewChatMessage } from "~/lib/use-cases/create-new-chat-message.server";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -55,7 +55,9 @@ export default function NoSession() {
   return (
     <>
       <fetcher.Form method="POST">
-        <TextareaWithButton name="prompt" loading={isLoading} />
+        <div className="w-2/3 mx-auto">
+          <InputWithButton name="prompt" loading={isLoading} />
+        </div>
       </fetcher.Form>
     </>
   );
