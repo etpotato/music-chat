@@ -176,7 +176,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
   return (
     <>
       <MessageList messages={optimisticMessages} />
-      <fetcher.Form method="POST" className="pt-2">
+      <fetcher.Form method="POST" className="p-2 pt-2">
         <input name="id" hidden defaultValue={FormId.Message} />
         <InputWithButton
           name="prompt"

@@ -17,13 +17,13 @@ export function MessageList({ messages }: MessageListProps) {
   }, [messages]);
 
   return (
-    <div className="flex flex-col grow overflow-y-auto pr-2 -mr-2">
+    <div className="flex flex-col grow overflow-y-auto p-2 pr-4 pt-4 -mr-2">
       <ul className="grid gap-4">
         {messages.map((message, index, arr) => (
           <li
             key={message.id}
-            className={cn("w-[90%]", {
-              ["ml-auto w-fit max-w-[min(90%,60ch)] min-w-[max(30%,20ch)]"]:
+            className={cn("w-[80%]", {
+              ["ml-auto w-fit max-w-[min(80%,60ch)] min-w-[max(30%,20ch)]"]:
                 message.author_type === MessageAuthorType.User,
             })}
             ref={index === arr.length - 1 ? lastMessageRef : null}

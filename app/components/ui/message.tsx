@@ -3,7 +3,7 @@ import { cn } from "~/lib/utils";
 import { MessageAuthorType } from "~/types/message";
 import { Loader } from "./loader";
 import { Button } from "./button";
-import { Form, useFetcher } from "react-router";
+import { useFetcher } from "react-router";
 import { FormId } from "~/const";
 import { useAuthContext } from "~/context/AuthContext";
 
@@ -26,7 +26,7 @@ export function Message({ message }: MessageProps) {
   return (
     <div
       className={cn("py-2", {
-        ["rounded-2xl px-3 text-accent bg-accent-foreground"]: isUser,
+        ["rounded-2xl px-3 border-1 bg-sky-50 border-sky-100"]: isUser,
       })}
     >
       <p className="mb-1">{message.isLoading ? <Loader /> : message.text}</p>
@@ -43,8 +43,8 @@ export function Message({ message }: MessageProps) {
                 />
                 <Button
                   type="submit"
-                  className="bg-green-800"
                   disabled={isLoading}
+                  className="hover:bg-green-800"
                 >
                   Add playlist
                 </Button>
@@ -52,7 +52,6 @@ export function Message({ message }: MessageProps) {
             ) : (
               <>
                 <input name="id" defaultValue={FormId.LoginSpotify} hidden />
-
                 <Button
                   type="submit"
                   className="block h-auto items-baseline"
@@ -90,7 +89,11 @@ export function Message({ message }: MessageProps) {
         </p>
       ) : null}
       {message.isLoading ? null : (
-        <p className={cn("text-xs opacity-50", { ["text-right"]: isUser })}>
+        <p
+          className={cn("text-xs opacity-50", {
+            ["text-right"]: isUser,
+          })}
+        >
           {message.created_at.toLocaleTimeString()}
         </p>
       )}

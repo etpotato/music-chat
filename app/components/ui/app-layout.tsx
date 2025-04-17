@@ -63,7 +63,7 @@ export function AppLayout({
       </Sidebar>
       <main className="relative grow h-screen flex flex-col">
         <SidebarTrigger />
-        <div className="p-2 grow flex flex-col justify-center overflow-hidden">
+        <div className="p-2 pt-0 grow flex flex-col justify-center overflow-hidden">
           {children}
         </div>
       </main>
