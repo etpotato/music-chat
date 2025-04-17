@@ -18,8 +18,8 @@ import { getRandomItem } from "~/utils/array";
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: "New React Router App" },
-    { name: "description", content: "Welcome to React Router!" },
+    { title: "Music chat session" },
+    { name: "description", content: "Welcome to the chat!" },
   ];
 }
 

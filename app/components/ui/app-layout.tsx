@@ -29,7 +29,10 @@ export function AppLayout({
       <Sidebar>
         <SidebarContent>
           <SidebarGroup>
-            <SidebarGroupLabel>Chats</SidebarGroupLabel>
+            <SidebarGroupLabel>
+              <span className="text-3xl text text-orange-600">Pot</span>
+              <span className="text-xs font-normal">your music guide</span>
+            </SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 <SidebarMenuItem>
