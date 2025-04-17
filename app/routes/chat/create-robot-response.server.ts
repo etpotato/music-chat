@@ -4,12 +4,12 @@ import {
   type Message,
   type Track,
 } from "generated/prisma";
-import { database } from "../database/index.server";
+import { database } from "../../lib/database/index.server";
 import {
   getRecommendedPlaylist,
   type RecommendedPlaylist,
-} from "../gen-ai/index.server";
-import { spotifyService } from "../spotify/index.server";
+} from "../../lib/gen-ai/index.server";
+import { spotifyService } from "../../lib/spotify/index.server";
 
 const TARGET_TRACK_NUMBER = 5;
 const MAX_ATTEMPTS = 3;

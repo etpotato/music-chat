@@ -2,7 +2,7 @@ import { createCookieSessionStorage, type Session } from "react-router";
 
 type SessionData = {
   user_id: string;
-  last_active_chat?: string;
+  last_active_chat_id?: string;
 };
 
 type SessionFlashData = {
@@ -28,7 +28,7 @@ const { getSession, commitSession, destroySession } =
       // path: "/",
       sameSite: "lax",
       secrets: [process.env.COOKIE_SECRET as string],
-      // secure: true,
+      secure: process.env.NODE_ENV !== "dev",
     },
   });
 

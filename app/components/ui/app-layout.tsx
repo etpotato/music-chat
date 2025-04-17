@@ -13,6 +13,7 @@ import {
 } from "./sidebar";
 import { Link } from "react-router";
 import type { ReactNode } from "react";
+import { AuthAvatar } from "./auth-avatar";
 
 export function AppLayout({
   chats,
@@ -35,7 +36,7 @@ export function AppLayout({
                   <SidebarMenuButton
                     variant="outline"
                     asChild
-                    className="w-fit flex justify-center items-center min-h-10 min-w-10 mb-1 ml-2 border-1 bg-white"
+                    className="w-fit flex justify-center items-center min-h-10 min-w-10 mb-1 ml-2 border-1 border-orange-400"
                   >
                     <Link to="/">+</Link>
                   </SidebarMenuButton>
@@ -62,7 +63,10 @@ export function AppLayout({
         </SidebarContent>
       </Sidebar>
       <main className="relative grow h-screen flex flex-col">
-        <SidebarTrigger />
+        <div className="flex justify-between p-2 border-b">
+          <SidebarTrigger />
+          <AuthAvatar />
+        </div>
         <div className="p-2 pt-0 grow flex flex-col justify-center overflow-hidden">
           {children}
         </div>

@@ -1,7 +1,8 @@
 import { createContext, useContext, type ReactNode } from "react";
+import type { SpotifyAuth } from "~/types/auth";
 
 type AuthContext = {
-  spotifyAuth: boolean;
+  spotify: SpotifyAuth;
 };
 
 const AuthContext = createContext<AuthContext | null>(null);

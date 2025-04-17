@@ -1,9 +1,9 @@
 import { data, redirect, useFetcher } from "react-router";
 import { database } from "~/lib/database/index.server";
-import type { Route } from "./+types/chat";
+import type { Route } from "./+types/index";
 import { StatusCodes } from "http-status-codes";
 import { InputWithButton } from "~/components/ui/input-with-button";
-import { createUserMessage } from "~/lib/use-cases/create-user-message.server";
+import { createUserMessage } from "~/routes/chat/create-user-message.server";
 import {
   MessageList,
   type MessageListProps,
@@ -13,7 +13,6 @@ import { nanoid } from "nanoid";
 import { MessageAuthorType } from "~/types/message";
 import { useEffect, useMemo } from "react";
 import { commitSession, getSession } from "~/lib/sessions/index.server";
-import { spotifyService } from "~/lib/spotify/index.server";
 import { FormId, placeholders } from "~/const";
 import { getRandomItem } from "~/utils/array";
 
@@ -50,34 +49,6 @@ export async function action({ request, params }: Route.ActionArgs) {
     return;
   }
 
-  if (formId === FormId.LoginSpotify) {
-    const session = await getSession(request.headers.get("Cookie"));
-    const userId = session.get("user_id");
-
-    if (!userId) {
-      throw data("User not found", { status: StatusCodes.NOT_FOUND });
-    }
-
-    const user = await database.getUserById(userId);
-
-    if (!user) {
-      throw data("User not found", { status: StatusCodes.NOT_FOUND });
-    }
-
-    const { url, state } = spotifyService.getAuthUrl(
-      process.env.SPOTIFY_REDIRECT_URL as string
-    );
-    await database.createOrUpdateSpotifyCredForUser(userId, { state });
-
-    session.set("last_active_chat", params.id);
-
-    return redirect(url, {
-      headers: {
-        "Set-Cookie": await commitSession(session),
-      },
-    });
-  }
-
   if (formId === FormId.AddPlaylist) {
     const session = await getSession(request.headers.get("Cookie"));
     const userId = session.get("user_id");
@@ -108,25 +79,34 @@ export async function action({ request, params }: Route.ActionArgs) {
       // throw data("Playlist not found", { status: StatusCodes.NOT_FOUND });
     }
 
-    console.log("playlist", user.spotify_cred);
-
     return;
   }
 }
 
-export async function loader({ params }: Route.LoaderArgs) {
+export async function loader({ request, params }: Route.LoaderArgs) {
   if (!params.id) {
     return redirect("/");
   }
+
   const messages = await database.getMessages(params.id);
 
   if (!messages) {
     return redirect("/");
   }
 
+  const session = await getSession(request.headers.get("Cookie"));
+  session.set("last_active_chat_id", params.id);
+
   const placeholder = getRandomItem(placeholders);
 
-  return { messages, placeholder };
+  return data(
+    { messages, placeholder },
+    {
+      headers: {
+        "Set-Cookie": await commitSession(session),
+      },
+    }
+  );
 }
 
 export default function Home({ loaderData }: Route.ComponentProps) {

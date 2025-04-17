@@ -2,6 +2,7 @@ export const FormId = {
   Message: "message",
   AddPlaylist: "add-playlist",
   LoginSpotify: "login-spotify",
+  LogoutSpotify: "logout-spotify",
 } as const;
 
 export const placeholders = [

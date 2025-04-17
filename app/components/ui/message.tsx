@@ -2,10 +2,9 @@ import type { Playlist, Track, Message } from "generated/prisma";
 import { cn } from "~/lib/utils";
 import { MessageAuthorType } from "~/types/message";
 import { Loader } from "./loader";
-import { Button } from "./button";
-import { useFetcher } from "react-router";
-import { FormId } from "~/const";
 import { useAuthContext } from "~/context/AuthContext";
+import { LoginForm } from "./login-form";
+import { AddPlaylistForm } from "./add-playlist-form";
 
 export type MessageProps = {
   message: Pick<Message, "id" | "text" | "author_type" | "created_at"> & {
@@ -15,9 +14,7 @@ export type MessageProps = {
 };
 
 export function Message({ message }: MessageProps) {
-  const fetcher = useFetcher();
-  const { spotifyAuth } = useAuthContext();
-  const isLoading = fetcher.state !== "idle";
+  const { spotify } = useAuthContext();
   const isUser = message.author_type === MessageAuthorType.User;
   const noPlaylist =
     message.author_type === MessageAuthorType.Robot &&
@@ -26,46 +23,17 @@ export function Message({ message }: MessageProps) {
   return (
     <div
       className={cn("py-2", {
-        ["rounded-2xl px-3 border-1 bg-sky-50 border-sky-100"]: isUser,
+        ["rounded-2xl px-3 border-1 bg-orange-50 border-orange-100"]: isUser,
       })}
     >
       <p className="mb-1">{message.isLoading ? <Loader /> : message.text}</p>
       {message.playlist?.tracks.length ? (
         <>
-          <fetcher.Form method="POST" className="max-w-fit ml-auto">
-            {spotifyAuth ? (
-              <>
-                <input name="id" defaultValue={FormId.AddPlaylist} hidden />
-                <input
-                  name="playlist_id"
-                  defaultValue={message.playlist.id}
-                  hidden
-                />
-                <Button
-                  type="submit"
-                  disabled={isLoading}
-                  className="hover:bg-green-800"
-                >
-                  Add playlist
-                </Button>
-              </>
-            ) : (
-              <>
-                <input name="id" defaultValue={FormId.LoginSpotify} hidden />
-                <Button
-                  type="submit"
-                  className="block h-auto items-baseline"
-                  disabled={isLoading}
-                  variant="outline"
-                >
-                  Login Spotify
-                  <span className="block text-[0.8em] opacity-50">
-                    to add to your playlists
-                  </span>
-                </Button>
-              </>
-            )}
-          </fetcher.Form>
+          {spotify.isAuthenticated ? (
+            <AddPlaylistForm playlistId={message.playlist.id} />
+          ) : (
+            <LoginForm className="w-fit ml-auto" hasDescription />
+          )}
           <ul className="grid gap-1 py-2">
             {message.playlist.tracks.map(({ spotify_id }) => (
               <li key={spotify_id}>

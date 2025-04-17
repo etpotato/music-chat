@@ -5,12 +5,11 @@ import {
   type Message,
   type Track,
   type Playlist,
-  Prisma,
   type SpotifyCred,
 } from "../../../generated/prisma";
 import prisma from "./prisma.server";
 
-class Database {
+class DatabasePrisma {
   constructor(private readonly client: PrismaClient) {}
 
   public async getUserById(id: User["id"]) {
@@ -112,31 +111,32 @@ class Database {
     userId: string,
     { state }: Pick<SpotifyCred, "state">
   ) {
-    const existing = await this.client.spotifyCred.findFirst({
+    const spotifyCred = await this.client.spotifyCred.upsert({
+      where: { user_id: userId },
+      create: {
+        user_id: userId,
+        state,
+      },
+      update: {
+        state,
+        code: null,
+        scope: null,
+        token_type: null,
+        access_token: null,
+        expires_in: null,
+        refresh_token: null,
+      },
+    });
+
+    return spotifyCred;
+  }
+
+  public async getSpotifyCredByUserId(userId: string) {
+    const spotifyCred = await this.client.spotifyCred.findFirst({
       where: { user_id: userId },
     });
 
-    if (existing) {
-      const updated = await this.client.spotifyCred.update({
-        where: { id: existing.id },
-        data: {
-          state,
-          expires_in: null,
-          scope: null,
-          token_type: null,
-          access_token: null,
-          refresh_token: null,
-        },
-      });
-
-      return updated;
-    }
-
-    const created = this.client.spotifyCred.create({
-      data: { state, user_id: userId },
-    });
-
-    return created;
+    return spotifyCred;
   }
 
   public async updateSpotifyCredByUserId(
@@ -144,7 +144,13 @@ class Database {
     patch: Partial<
       Pick<
         SpotifyCred,
-        "code" | "access_token" | "expires_in" | "refresh_token" | "token_type"
+        | "code"
+        | "access_token"
+        | "expires_in"
+        | "refresh_token"
+        | "token_type"
+        | "name"
+        | "avatar"
       >
     >
   ) {
@@ -157,6 +163,10 @@ class Database {
 
     return result;
   }
+
+  public async deleteSpotifyCredByUserId(userId: string) {
+    await this.client.spotifyCred.delete({ where: { user_id: userId } });
+  }
 }
 
-export const database = new Database(prisma);
+export const database = new DatabasePrisma(prisma);

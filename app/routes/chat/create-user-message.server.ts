@@ -1,7 +1,5 @@
 import { MessageAuthorType, type Chat, type Message } from "generated/prisma";
-import { database } from "../database/index.server";
-import { getRecommendedPlaylist } from "../gen-ai/index.server";
-import { spotifyService } from "../spotify/index.server";
+import { database } from "../../lib/database/index.server";
 import { createRobotResponse } from "./create-robot-response.server";
 
 export async function createUserMessage({

@@ -6,7 +6,7 @@ config();
 export default [
   route("/", "routes/home.tsx", [
     index("routes/no-session.tsx"),
-    route("chats/:id", "routes/chat.tsx"),
+    route("chats/:id", "routes/chat/index.tsx"),
   ]),
   route("/auth/spotify", "routes/auth-spotify.ts"),
 ] satisfies RouteConfig;

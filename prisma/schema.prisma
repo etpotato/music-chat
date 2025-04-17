@@ -74,6 +74,8 @@ model SpotifyCred {
   access_token  String?
   expires_in    Int?
   refresh_token String?
+  name          String?
+  avatar        String?
   user_id       String   @unique
   user          User     @relation(fields: [user_id], references: [id])
   creaded_at    DateTime @default(now())

@@ -1,6 +1,12 @@
 import { SpotifyApi, type Track } from "@spotify/web-api-ts-sdk";
 import type { Track as SuggestedTrack } from "generated/prisma";
 import { randomBytes } from "node:crypto";
+import { getSpotifyBasicAuthToken } from "./utils.server";
+
+const SPOTIFY_SCOPE =
+  "user-read-email user-read-private playlist-modify-public";
+const SPOTIFY_AUTH_GRANT_TYPE = "authorization_code";
+const SPOTIFY_REFRESH_GRANT_TYPE = "refresh_token";
 
 export type SpotifyTokenReponse = {
   access_token: string;
@@ -45,12 +51,11 @@ export class SpotifyService {
 
   public getAuthUrl(redirectUrl: string) {
     const state = randomBytes(16).toString("hex");
-    const scope = "playlist-modify-public";
 
     const searchParams = new URLSearchParams({
       response_type: "code",
       client_id: this.clientId,
-      scope: scope,
+      scope: SPOTIFY_SCOPE,
       redirect_uri: redirectUrl,
       state,
     });
@@ -61,34 +66,64 @@ export class SpotifyService {
     };
   }
 
-  public async getUserTokens(redirectUrl: string, code: string) {
+  public async getUserToken(redirectUrl: string, code: string) {
+    // https://developer.spotify.com/documentation/web-api/tutorials/code-flow
     const body = new URLSearchParams({
       code,
       redirect_uri: redirectUrl,
-      grant_type: "authorization_code",
+      grant_type: SPOTIFY_AUTH_GRANT_TYPE,
     }).toString();
 
     const response = await fetch("https://accounts.spotify.com/api/token", {
       method: "POST",
       headers: {
         "content-type": "application/x-www-form-urlencoded",
-        Authorization:
-          "Basic " +
-          Buffer.from(this.clientId + ":" + this.clientSecret).toString(
-            "base64"
-          ),
+        Authorization: getSpotifyBasicAuthToken(
+          this.clientId,
+          this.clientSecret
+        ),
       },
       body,
     });
 
+    // TODO: handle errors
     if (!response.ok) {
-      throw new Error("Request failed");
+      throw new Error("getUserToken request failed");
     }
 
     const data = (await response.json()) as SpotifyTokenReponse;
 
     return data;
   }
+
+  // public async refreshUserToken(refreshToken: string) {
+  //   // https://developer.spotify.com/documentation/web-api/tutorials/refreshing-tokens
+  //   const body = new URLSearchParams({
+  //     refresh_token: refreshToken,
+  //     grant_type: SPOTIFY_REFRESH_GRANT_TYPE,
+  //   }).toString();
+
+  //   const response = await fetch("https://accounts.spotify.com/api/token", {
+  //     method: "POST",
+  //     headers: {
+  //       "content-type": "application/x-www-form-urlencoded",
+  //       Authorization: getSpotifyBasicAuthToken(
+  //         this.clientId,
+  //         this.clientSecret
+  //       ),
+  //     },
+  //     body,
+  //   });
+
+  //   // TODO: handle errors
+  //   if (!response.ok) {
+  //     throw new Error("refreshUserToken request failed");
+  //   }
+
+  //   const data = (await response.json()) as SpotifyTokenReponse;
+
+  //   return data;
+  // }
 }
 
 export const spotifyService = new SpotifyService(
