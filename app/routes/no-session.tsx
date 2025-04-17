@@ -1,6 +1,6 @@
 import { data, redirect, useFetcher } from "react-router";
 import { database } from "~/lib/database/index.server";
-import { getSession } from "~/lib/sessions/index.server";
+import { commitSession, getSession } from "~/lib/sessions/index.server";
 import type { Route } from "./+types/no-session";
 import { InputWithButton } from "~/components/ui/input-with-button";
 import { StatusCodes } from "http-status-codes";
@@ -11,7 +11,7 @@ import { placeholders } from "~/const";
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: "Music caht session" },
+    { title: "Music chat session" },
     { name: "description", content: "Welcome to the chat!" },
   ];
 }
@@ -40,9 +40,19 @@ export async function action({ request }: Route.ActionArgs) {
   return redirect(`/chats/${newChat.id}`);
 }
 
-export async function loader() {
+export async function loader({ request }: Route.LoaderArgs) {
+  const session = await getSession(request.headers.get("Cookie"));
+  session.unset("last_active_chat_id");
   const placeholder = getRandomItem(placeholders);
-  return { placeholder };
+
+  return data(
+    { placeholder },
+    {
+      headers: {
+        "Set-Cookie": await commitSession(session),
+      },
+    }
+  );
 }
 
 export default function NoSession({ loaderData }: Route.ComponentProps) {
