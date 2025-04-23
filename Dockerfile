@@ -20,5 +20,6 @@ COPY prisma /app/prisma
 COPY --from=production-dependencies-env /app/node_modules /app/node_modules
 COPY --from=build-env /app/build /app/build
 COPY generated/prisma/libquery_engine-linux-musl-arm64-openssl-3.0.x.so.node /app/build/server
+COPY generated/prisma/libquery_engine-linux-musl-openssl-3.0.x.so.node /app/build/server
 WORKDIR /app
 CMD ["npm", "run", "start:prod"]
