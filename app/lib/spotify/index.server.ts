@@ -41,7 +41,7 @@ export class SpotifyService {
     album,
   }: SuggestedTrack): Promise<Track | undefined> {
     const result = await this.client.search(
-      `${name} artist:${author} year:${release_date.getFullYear()} album:${album}`,
+      `${name} artist:${author} album:${album}`,
       ["track"],
       undefined,
       1
