@@ -1,6 +1,6 @@
 import { data, Outlet, useLocation, useParams } from "react-router";
 import { database } from "~/lib/database/index.server";
-import { commitSession, getSession } from "~/lib/sessions/user-session.server";
+import { userSession } from "~/lib/sessions/user-session.server";
 import type { SpotifyAuth } from "~/types/auth";
 import { FormId } from "~/const";
 import type { Route } from "./+types";
@@ -20,7 +20,7 @@ export function meta({}: Route.MetaArgs) {
 export async function action({ request }: Route.ActionArgs) {
   const formData = await request.formData();
   const formId = formData.get("id");
-  const session = await getSession(request.headers.get("Cookie"));
+  const session = await userSession.getSession(request.headers.get("Cookie"));
 
   if (formId === FormId.LoginSpotify) {
     return loginSpotify(session);
@@ -33,7 +33,7 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export async function loader({ request }: Route.LoaderArgs) {
-  const session = await getSession(request.headers.get("Cookie"));
+  const session = await userSession.getSession(request.headers.get("Cookie"));
   const user = await getOrCreateUserById(
     session.get("user_id"),
     request.headers.get("user-agent")
@@ -52,7 +52,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     { chats, auth: { spotify } },
     {
       headers: {
-        "Set-Cookie": await commitSession(session),
+        "Set-Cookie": await userSession.commitSession(session),
       },
     }
   );

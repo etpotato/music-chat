@@ -1,5 +1,5 @@
-import * as userSession from "~/lib/sessions/user-session.server";
-import * as lastChatSession from "~/lib/sessions/last-chat-session.server";
+import { userSession } from "~/lib/sessions/user-session.server";
+import { lastChatSession } from "~/lib/sessions/last-chat-session.server";
 import type { Route } from "./+types/auth-spotify";
 import { database } from "~/lib/database/index.server";
 import { data, redirect } from "react-router";

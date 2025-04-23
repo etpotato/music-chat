@@ -2,10 +2,7 @@ import { redirect } from "react-router";
 import { appConfig } from "../app-config/index.server";
 import { database } from "../database/index.server";
 import { spotifyService } from "../spotify/index.server";
-import {
-  commitSession,
-  type UserSession,
-} from "../sessions/user-session.server";
+import { userSession, type UserSession } from "../sessions/user-session.server";
 import { getUserFromSession } from "./get-user-from-session.server";
 
 export async function loginSpotify(session: UserSession) {
@@ -17,7 +14,7 @@ export async function loginSpotify(session: UserSession) {
 
   return redirect(url, {
     headers: {
-      "Set-Cookie": await commitSession(session),
+      "Set-Cookie": await userSession.commitSession(session),
     },
   });
 }

@@ -32,4 +32,4 @@ const { getSession, commitSession, destroySession } =
     },
   });
 
-export { getSession, commitSession, destroySession };
+export const lastChatSession = { getSession, commitSession, destroySession };

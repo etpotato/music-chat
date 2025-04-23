@@ -15,7 +15,7 @@ const { getSession, commitSession, destroySession } =
   createCookieSessionStorage<SessionData, SessionFlashData>({
     // a Cookie from `createCookie` or the CookieOptions to create one
     cookie: {
-      name: "__session",
+      name: "__last_opened_chat_session",
 
       // all of these are optional
       // domain: "reactrouter.com",
@@ -32,4 +32,4 @@ const { getSession, commitSession, destroySession } =
     },
   });
 
-export { getSession, commitSession, destroySession };
+export const userSession = { getSession, commitSession, destroySession };

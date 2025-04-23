@@ -1,4 +1,4 @@
-import { data, redirect, useActionData, useFetcher } from "react-router";
+import { data, redirect, useFetcher } from "react-router";
 import { database } from "~/lib/database/index.server";
 import type { Route } from "./+types/index";
 import { StatusCodes } from "http-status-codes";
@@ -12,8 +12,8 @@ import { nanoid } from "nanoid";
 // got broken js on the client when import from "generated/prisma"
 import { MessageAuthorType } from "~/types/message";
 import { useEffect, useMemo } from "react";
-import * as userSession from "~/lib/sessions/user-session.server";
-import * as lastChatSession from "~/lib/sessions/last-chat-session.server";
+import { userSession } from "~/lib/sessions/user-session.server";
+import { lastChatSession } from "~/lib/sessions/last-chat-session.server";
 import { FormId, placeholders } from "~/const";
 import { getRandomItem } from "~/utils/array";
 import { loginSpotify } from "~/lib/use-case/login-spotify.server";

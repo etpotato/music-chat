@@ -1,7 +1,7 @@
 import { data, redirect, useFetcher } from "react-router";
 import { database } from "~/lib/database/index.server";
-import * as userSession from "~/lib/sessions/user-session.server";
-import * as lastChatSession from "~/lib/sessions/last-chat-session.server";
+import { userSession } from "~/lib/sessions/user-session.server";
+import { lastChatSession } from "~/lib/sessions/last-chat-session.server";
 import type { Route } from "./+types/no-session";
 import { InputWithButton } from "~/components/ui/input-with-button";
 import { StatusCodes } from "http-status-codes";
