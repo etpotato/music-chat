@@ -1,4 +1,5 @@
-import { getSession } from "~/lib/sessions/index.server";
+import * as userSession from "~/lib/sessions/user-session.server";
+import * as lastChatSession from "~/lib/sessions/last-chat-session.server";
 import type { Route } from "./+types/auth-spotify";
 import { database } from "~/lib/database/index.server";
 import { data, redirect } from "react-router";
@@ -8,8 +9,12 @@ import { SpotifyWithUserCred } from "~/lib/spotify/with-user-cred.server";
 import { appConfig } from "~/lib/app-config/index.server";
 
 export async function loader({ request }: Route.LoaderArgs) {
-  const session = await getSession(request.headers.get("Cookie"));
-  const userId = session.get("user_id");
+  const uSession = await userSession.getSession(request.headers.get("Cookie"));
+  const chatSession = await lastChatSession.getSession(
+    request.headers.get("Cookie")
+  );
+
+  const userId = uSession.get("user_id");
 
   if (!userId) {
     return data("User not found", { status: StatusCodes.NOT_FOUND });
@@ -54,7 +59,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     avatar: profile.images[0]?.url,
   });
 
-  const lastActiveChatId = session.get("last_active_chat_id");
+  const lastActiveChatId = chatSession.get("last_active_chat_id");
 
   return redirect(lastActiveChatId ? `/chats/${lastActiveChatId}` : "/");
 }

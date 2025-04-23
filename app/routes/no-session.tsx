@@ -1,6 +1,7 @@
 import { data, redirect, useFetcher } from "react-router";
 import { database } from "~/lib/database/index.server";
-import { commitSession, getSession } from "~/lib/sessions/index.server";
+import * as userSession from "~/lib/sessions/user-session.server";
+import * as lastChatSession from "~/lib/sessions/last-chat-session.server";
 import type { Route } from "./+types/no-session";
 import { InputWithButton } from "~/components/ui/input-with-button";
 import { StatusCodes } from "http-status-codes";
@@ -17,7 +18,7 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export async function action({ request }: Route.ActionArgs) {
-  const session = await getSession(request.headers.get("Cookie"));
+  const session = await userSession.getSession(request.headers.get("Cookie"));
   const userId = session.get("user_id");
 
   if (!userId) {
@@ -41,7 +42,9 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export async function loader({ request }: Route.LoaderArgs) {
-  const session = await getSession(request.headers.get("Cookie"));
+  const session = await lastChatSession.getSession(
+    request.headers.get("Cookie")
+  );
   session.unset("last_active_chat_id");
   const placeholder = getRandomItem(placeholders);
 
@@ -49,7 +52,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     { placeholder },
     {
       headers: {
-        "Set-Cookie": await commitSession(session),
+        "Set-Cookie": await lastChatSession.commitSession(session),
       },
     }
   );

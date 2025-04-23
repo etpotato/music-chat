@@ -22,6 +22,7 @@ class DatabasePrisma {
   public async createUser({ user_agent }: Pick<User, "user_agent">) {
     const created = await this.client.user.create({
       data: { user_agent },
+      include: { spotify_cred: true },
     });
 
     return created;

@@ -3,7 +3,6 @@ import { appConfig } from "~/lib/app-config/index.server";
 
 type SessionData = {
   user_id: string;
-  last_active_chat_id?: string;
 };
 
 type SessionFlashData = {

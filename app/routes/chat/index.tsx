@@ -12,12 +12,12 @@ import { nanoid } from "nanoid";
 // got broken js on the client when import from "generated/prisma"
 import { MessageAuthorType } from "~/types/message";
 import { useEffect, useMemo } from "react";
-import { commitSession, getSession } from "~/lib/sessions/index.server";
+import * as userSession from "~/lib/sessions/user-session.server";
+import * as lastChatSession from "~/lib/sessions/last-chat-session.server";
 import { FormId, placeholders } from "~/const";
 import { getRandomItem } from "~/utils/array";
-import { isValidSpotifyToken } from "~/lib/use-case/is-valid-spotify-token.server";
-import { SpotifyWithUserCred } from "~/lib/spotify/with-user-cred.server";
-import { appConfig } from "~/lib/app-config/index.server";
+import { loginSpotify } from "~/lib/use-case/login-spotify.server";
+import { addPlaylist } from "~/lib/use-case/add-playlist.server";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -33,8 +33,13 @@ export async function action({ request, params }: Route.ActionArgs) {
     throw data("Chat not found", { status: StatusCodes.NOT_FOUND });
   }
 
+  const session = await userSession.getSession(request.headers.get("Cookie"));
   const formData = await request.formData();
   const formId = formData.get("id");
+
+  if (formId === FormId.LoginSpotify) {
+    return loginSpotify(chatId, session);
+  }
 
   if (formId === FormId.Message) {
     const text = formData.get("prompt");
@@ -53,49 +58,8 @@ export async function action({ request, params }: Route.ActionArgs) {
   }
 
   if (formId === FormId.AddPlaylist) {
-    const session = await getSession(request.headers.get("Cookie"));
-    const userId = session.get("user_id");
-
-    if (!userId) {
-      throw data("User not found", { status: StatusCodes.NOT_FOUND });
-    }
-
-    const user = await database.getUserById(userId);
-
-    if (!user) {
-      throw data("User not found", { status: StatusCodes.NOT_FOUND });
-    }
-
-    const playlistId = formData.get("playlist_id") as string | null;
-
-    if (!playlistId) {
-      throw data("Playlist not found", { status: StatusCodes.NOT_FOUND });
-    }
-
-    const playlist = await database.getPlaylistById(playlistId);
-
-    if (!playlist) {
-      throw data("Playlist not found", { status: StatusCodes.NOT_FOUND });
-    }
-
-    if (!(user.spotify_cred && isValidSpotifyToken(user.spotify_cred))) {
-      throw data("Spotify token is invalid", {
-        status: StatusCodes.UNAUTHORIZED,
-      });
-    }
-
-    const spotifyWithUserCred = new SpotifyWithUserCred(
-      appConfig.SPOTIFY_CLIENT_ID,
-      user.spotify_cred
-    );
-
-    const createdPlaylistId = await spotifyWithUserCred.createPlaylist(
-      playlist
-    );
-
-    await database.updatePlaylistById(playlist.id, {
-      spotify_id: createdPlaylistId,
-    });
+    await addPlaylist(formData.get("playlist_id") as string | null, session);
+    return;
   }
 }
 
@@ -110,7 +74,9 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     return redirect("/");
   }
 
-  const session = await getSession(request.headers.get("Cookie"));
+  const session = await lastChatSession.getSession(
+    request.headers.get("Cookie")
+  );
   session.set("last_active_chat_id", params.id);
 
   const placeholder = getRandomItem(placeholders);
@@ -119,7 +85,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     { messages, placeholder },
     {
       headers: {
-        "Set-Cookie": await commitSession(session),
+        "Set-Cookie": await lastChatSession.commitSession(session),
       },
     }
   );

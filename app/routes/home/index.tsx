@@ -1,14 +1,14 @@
-import { data, Outlet, redirect, useLocation, useParams } from "react-router";
+import { data, Outlet, useLocation, useParams } from "react-router";
 import { database } from "~/lib/database/index.server";
-import { commitSession, getSession } from "~/lib/sessions/index.server";
+import { commitSession, getSession } from "~/lib/sessions/user-session.server";
 import type { SpotifyAuth } from "~/types/auth";
-import { spotifyService } from "~/lib/spotify/index.server";
-import { StatusCodes } from "http-status-codes";
 import { FormId } from "~/const";
 import type { Route } from "./+types";
 import { AuthProvider } from "~/context/AuthContext";
 import { AppLayout } from "~/components/ui/app-layout";
-import { appConfig } from "~/lib/app-config/index.server";
+import { getUserFromSession } from "~/lib/use-case/get-user-from-session.server";
+import { loginSpotify } from "~/lib/use-case/login-spotify.server";
+import { getOrCreateUserById } from "~/lib/use-case/get-or-create-user-by-id.server";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -20,31 +20,12 @@ export function meta({}: Route.MetaArgs) {
 export async function action({ request }: Route.ActionArgs) {
   const formData = await request.formData();
   const formId = formData.get("id");
-
   const session = await getSession(request.headers.get("Cookie"));
-  const userId = session.get("user_id");
 
-  if (!userId) {
-    throw data("User not found", { status: StatusCodes.NOT_FOUND });
-  }
-
-  const user = await database.getUserById(userId);
-
-  if (!user) {
-    throw data("User not found", { status: StatusCodes.NOT_FOUND });
-  }
+  const user = await getUserFromSession(session);
 
   if (formId === FormId.LoginSpotify) {
-    const { url, state } = spotifyService.getAuthUrl(
-      appConfig.SPOTIFY_REDIRECT_URL
-    );
-    await database.createOrUpdateSpotifyCredForUser(userId, { state });
-
-    return redirect(url, {
-      headers: {
-        "Set-Cookie": await commitSession(session),
-      },
-    });
+    return loginSpotify(user.id, session);
   }
 
   if (formId === FormId.LogoutSpotify) {
@@ -55,9 +36,12 @@ export async function action({ request }: Route.ActionArgs) {
 
 export async function loader({ request }: Route.LoaderArgs) {
   const session = await getSession(request.headers.get("Cookie"));
+  const user = await getOrCreateUserById(
+    session.get("user_id"),
+    request.headers.get("user-agent")
+  );
+  session.set("user_id", user.id);
 
-  let userId = session.get("user_id");
-  const user = userId ? await database.getUserById(userId) : null;
   const spotify: SpotifyAuth = {
     isAuthenticated:
       Boolean(user?.spotify_cred?.access_token) &&
@@ -69,15 +53,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     avatar: user?.spotify_cred?.avatar || undefined,
   };
 
-  if (!user) {
-    const newUser = await database.createUser({
-      user_agent: request.headers.get("user-agent"),
-    });
-    session.set("user_id", newUser.id);
-    userId = newUser.id;
-  }
-
-  const chats = userId ? await database.getUserChats(userId) : [];
+  const chats = (await database.getUserChats(user.id)) || [];
 
   return data(
     { chats, auth: { spotify } },
