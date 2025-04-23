@@ -1,3 +1,4 @@
+import { MessageAuthorType } from "~/types/message";
 import {
   PrismaClient,
   type User,
@@ -6,6 +7,7 @@ import {
   type Track,
   type Playlist,
   type SpotifyCred,
+  type GeneratedMessage,
 } from "../../../generated/prisma";
 import prisma from "./prisma.server";
 
@@ -196,6 +198,46 @@ class DatabasePrisma {
       where: { id },
       data: patch,
     });
+  }
+
+  public async createGeneratedMessage({
+    chat_id,
+    text,
+  }: Pick<GeneratedMessage, "chat_id" | "text">) {
+    const created = await this.client.generatedMessage.create({
+      data: {
+        text,
+        chat_id,
+      },
+    });
+
+    return created;
+  }
+
+  public async getChatHistory(chatId: Chat["id"]) {
+    const chat = await this.client.chat.findFirst({
+      where: { id: chatId },
+      include: {
+        messages: {
+          select: {
+            text: true,
+            created_at: true,
+          },
+          where: { author_type: MessageAuthorType.User },
+        },
+        generated_messages: {
+          select: {
+            text: true,
+            created_at: true,
+          },
+        },
+      },
+    });
+
+    return {
+      userMessages: chat?.messages,
+      generatedMessages: chat?.generated_messages,
+    };
   }
 }
 

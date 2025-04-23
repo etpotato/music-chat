@@ -21,23 +21,40 @@ export function Message({ message }: MessageProps) {
     message.author_type === MessageAuthorType.Robot &&
     !message.isLoading &&
     !message.playlist?.tracks.length;
+
   return (
     <div
       className={cn("py-2", {
         ["rounded-2xl px-3 border-1 bg-orange-50 border-orange-100"]: isUser,
       })}
     >
-      <p className="mb-1">{message.isLoading ? <Loader /> : message.text}</p>
+      {message.isLoading ? (
+        <Loader />
+      ) : (
+        <>
+          <p className="mb-1">{message.text}</p>
+          {message.playlist?.description ? (
+            <p className="mb-1 mt-2">{message.playlist.description}</p>
+          ) : null}
+        </>
+      )}
       {message.playlist?.tracks.length ? (
         <>
-          <div className="max-w-fit ml-auto">
+          <div className="grid grid-cols-[1fr_auto] gap-2 items-center">
+            <p
+              className={cn("truncate text-orange-600 italic", {
+                ["text-green-600"]: message.playlist.spotify_id,
+              })}
+            >
+              &laquo;{message.playlist.name}&raquo;
+            </p>
             {spotify.isAuthenticated ? (
               message.playlist.spotify_id ? (
                 <a
                   href={getPlaylistUrl(message.playlist.spotify_id)}
                   rel="noreferrer noopener"
                   target="_blank"
-                  className="text-green-500 py-1 px-4 inline-block border-1 border-green-500 rounded-md hover:bg-green-500 hover:text-white"
+                  className="text-green-600 py-1 px-4 inline-block border-1 border-green-600 rounded-md hover:bg-green-600 hover:text-white"
                 >
                   Open in Spotify
                 </a>

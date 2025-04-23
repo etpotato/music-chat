@@ -15,5 +15,5 @@ export async function createUserMessage({
     author_type: MessageAuthorType.User,
   });
 
-  await createRobotResponse({ chatId, text });
+  await createRobotResponse(chatId);
 }

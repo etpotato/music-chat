@@ -12,11 +12,11 @@ export function AddPlaylistForm({ playlistId }: AddPlaylistFromProps) {
   const fetcher = useFetcher<{ playlistSpotifyId?: string }>();
   const isLoading = fetcher.state !== "idle";
 
-  useEffect(() => {
-    if (fetcher.data?.playlistSpotifyId) {
-      window.open(getPlaylistUrl(fetcher.data.playlistSpotifyId), "_blank");
-    }
-  }, [fetcher.data]);
+  // useEffect(() => {
+  //   if (fetcher.data?.playlistSpotifyId) {
+  //     window.open(getPlaylistUrl(fetcher.data.playlistSpotifyId), "_blank");
+  //   }
+  // }, [fetcher.data]);
 
   return (
     <fetcher.Form method="POST" className="max-w-fit">

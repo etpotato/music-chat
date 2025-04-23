@@ -22,13 +22,14 @@ model User {
 }
 
 model Chat {
-  id         String    @id @default(uuid())
-  user       User      @relation(fields: [user_id], references: [id])
-  user_id    String
-  name       String
-  messages   Message[]
-  created_at DateTime  @default(now())
-  updated_at DateTime  @default(now()) @updatedAt
+  id                 String             @id @default(uuid())
+  user               User               @relation(fields: [user_id], references: [id])
+  user_id            String
+  name               String
+  messages           Message[]
+  created_at         DateTime           @default(now())
+  updated_at         DateTime           @default(now()) @updatedAt
+  generated_messages GeneratedMessage[]
 }
 
 model Message {
@@ -40,6 +41,15 @@ model Message {
   created_at  DateTime          @default(now())
   updated_at  DateTime          @default(now()) @updatedAt
   playlist    Playlist?
+}
+
+model GeneratedMessage {
+  id         String   @id @default(uuid())
+  text       String
+  chat       Chat     @relation(fields: [chat_id], references: [id])
+  chat_id    String
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now()) @updatedAt
 }
 
 model Playlist {

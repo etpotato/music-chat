@@ -37,9 +37,10 @@ export class SpotifyService {
   public async getTrack({
     name,
     author,
-    release_date,
     album,
-  }: SuggestedTrack): Promise<Track | undefined> {
+  }: Pick<SuggestedTrack, "name" | "album" | "author">): Promise<
+    Track | undefined
+  > {
     const result = await this.client.search(
       `${name} artist:${author} album:${album}`,
       ["track"],
