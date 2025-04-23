@@ -52,7 +52,12 @@ export async function createRobotResponse({
       })
     );
 
-    tracks.push(...newTracks);
+    for (const newTrack of newTracks) {
+      if (tracks.every((track) => track.spotify_id !== newTrack.spotify_id)) {
+        tracks.push(newTrack);
+      }
+    }
+
     attempts++;
   }
 

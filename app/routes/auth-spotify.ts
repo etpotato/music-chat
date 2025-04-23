@@ -5,6 +5,7 @@ import { data, redirect } from "react-router";
 import { StatusCodes } from "http-status-codes";
 import { spotifyService } from "~/lib/spotify/index.server";
 import { SpotifyWithUserCred } from "~/lib/spotify/with-user-cred.server";
+import { appConfig } from "~/lib/app-config/index.server";
 
 export async function loader({ request }: Route.LoaderArgs) {
   const session = await getSession(request.headers.get("Cookie"));
@@ -36,20 +37,19 @@ export async function loader({ request }: Route.LoaderArgs) {
   });
 
   const tokenData = await spotifyService.getUserToken(
-    process.env.SPOTIFY_REDIRECT_URL || "",
+    appConfig.SPOTIFY_REDIRECT_URL,
     code
   );
 
-  await database.updateSpotifyCredByUserId(user.id, tokenData);
-
   const spotifyWithUserCred = new SpotifyWithUserCred(
-    process.env.SPOTIFY_CLIENT_ID as string,
+    appConfig.SPOTIFY_CLIENT_ID,
     tokenData
   );
-
   const profile = await spotifyWithUserCred.getUserInfo();
 
   await database.updateSpotifyCredByUserId(user.id, {
+    ...tokenData,
+    expires: new Date(Date.now() + tokenData.expires_in * 1000),
     name: profile.display_name,
     avatar: profile.images[0]?.url,
   });

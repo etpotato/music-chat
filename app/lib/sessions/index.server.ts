@@ -1,4 +1,5 @@
 import { createCookieSessionStorage, type Session } from "react-router";
+import { appConfig } from "~/lib/app-config/index.server";
 
 type SessionData = {
   user_id: string;
@@ -27,8 +28,8 @@ const { getSession, commitSession, destroySession } =
       // maxAge: 60,
       // path: "/",
       sameSite: "lax",
-      secrets: [process.env.COOKIE_SECRET as string],
-      secure: process.env.NODE_ENV !== "dev",
+      secrets: [appConfig.COOKIE_SECRET],
+      secure: appConfig.NODE_ENV !== "development",
     },
   });
 

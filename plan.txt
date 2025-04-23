@@ -1,0 +1,3 @@
+- add spotify service for client creds + refresh token
+- docker-compose and DB for prod
+- add config service, valdate env variables on startup

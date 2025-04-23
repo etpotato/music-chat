@@ -15,6 +15,9 @@ import { useEffect, useMemo } from "react";
 import { commitSession, getSession } from "~/lib/sessions/index.server";
 import { FormId, placeholders } from "~/const";
 import { getRandomItem } from "~/utils/array";
+import { isValidSpotifyToken } from "~/lib/use-case/is-valid-spotify-token.server";
+import { SpotifyWithUserCred } from "~/lib/spotify/with-user-cred.server";
+import { appConfig } from "~/lib/app-config/index.server";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -75,11 +78,24 @@ export async function action({ request, params }: Route.ActionArgs) {
       throw data("Playlist not found", { status: StatusCodes.NOT_FOUND });
     }
 
-    if (!user.spotify_cred) {
-      // throw data("Playlist not found", { status: StatusCodes.NOT_FOUND });
+    if (!(user.spotify_cred && isValidSpotifyToken(user.spotify_cred))) {
+      throw data("Spotify token is invalid", {
+        status: StatusCodes.UNAUTHORIZED,
+      });
     }
 
-    return;
+    const spotifyWithUserCred = new SpotifyWithUserCred(
+      appConfig.SPOTIFY_CLIENT_ID,
+      user.spotify_cred
+    );
+
+    const createdPlaylistId = await spotifyWithUserCred.createPlaylist(
+      playlist
+    );
+
+    await database.updatePlaylistById(playlist.id, {
+      spotify_id: createdPlaylistId,
+    });
   }
 }
 

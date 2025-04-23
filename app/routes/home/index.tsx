@@ -1,13 +1,14 @@
 import { data, Outlet, redirect, useLocation, useParams } from "react-router";
 import { database } from "~/lib/database/index.server";
 import { commitSession, getSession } from "~/lib/sessions/index.server";
-import type { Route } from "./+types/home";
-import { AppLayout } from "~/components/ui/app-layout";
-import { AuthProvider } from "~/context/AuthContext";
 import type { SpotifyAuth } from "~/types/auth";
 import { spotifyService } from "~/lib/spotify/index.server";
 import { StatusCodes } from "http-status-codes";
 import { FormId } from "~/const";
+import type { Route } from "./+types";
+import { AuthProvider } from "~/context/AuthContext";
+import { AppLayout } from "~/components/ui/app-layout";
+import { appConfig } from "~/lib/app-config/index.server";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -16,7 +17,7 @@ export function meta({}: Route.MetaArgs) {
   ];
 }
 
-export async function action({ request, params }: Route.ActionArgs) {
+export async function action({ request }: Route.ActionArgs) {
   const formData = await request.formData();
   const formId = formData.get("id");
 
@@ -35,7 +36,7 @@ export async function action({ request, params }: Route.ActionArgs) {
 
   if (formId === FormId.LoginSpotify) {
     const { url, state } = spotifyService.getAuthUrl(
-      process.env.SPOTIFY_REDIRECT_URL as string
+      appConfig.SPOTIFY_REDIRECT_URL
     );
     await database.createOrUpdateSpotifyCredForUser(userId, { state });
 

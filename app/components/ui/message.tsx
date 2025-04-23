@@ -29,11 +29,24 @@ export function Message({ message }: MessageProps) {
       <p className="mb-1">{message.isLoading ? <Loader /> : message.text}</p>
       {message.playlist?.tracks.length ? (
         <>
-          {spotify.isAuthenticated ? (
-            <AddPlaylistForm playlistId={message.playlist.id} />
-          ) : (
-            <LoginForm className="w-fit ml-auto" hasDescription />
-          )}
+          <div className="max-w-fit ml-auto">
+            {spotify.isAuthenticated ? (
+              message.playlist.spotify_id ? (
+                <a
+                  href={`https://open.spotify.com/playlist/${message.playlist.spotify_id}`}
+                  rel="noreferrer noopener"
+                  target="_blank"
+                  className="text-green-500 py-2 px-4 inline-block border-1 border-orange-200 rounded-md hover:bg-orange-100"
+                >
+                  Spotify playlist
+                </a>
+              ) : (
+                <AddPlaylistForm playlistId={message.playlist.id} />
+              )
+            ) : (
+              <LoginForm className="w-fit ml-auto" hasDescription />
+            )}
+          </div>
           <ul className="grid gap-1 py-2">
             {message.playlist.tracks.map(({ spotify_id }) => (
               <li key={spotify_id}>
@@ -51,7 +64,7 @@ export function Message({ message }: MessageProps) {
           </ul>
         </>
       ) : noPlaylist ? (
-        <p className="mb-1 text-green-500 text-xs">
+        <p className="mb-1 text-orange-500 text-xs">
           Your taste is really special, I couldn’t even find the tracks on
           Spotify! Please try something a bit more accessible
         </p>

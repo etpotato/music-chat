@@ -11,7 +11,7 @@ export function AddPlaylistForm({ playlistId }: AddPlaylistFromProps) {
   const isLoading = fetcher.state !== "idle";
 
   return (
-    <fetcher.Form method="POST" className="max-w-fit ml-auto">
+    <fetcher.Form method="POST" className="max-w-fit">
       <>
         <input name="id" defaultValue={FormId.AddPlaylist} hidden />
         <input name="playlist_id" defaultValue={playlistId} hidden />

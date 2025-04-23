@@ -2,8 +2,9 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider      = "prisma-client"
+  output        = "../generated/prisma"
+  binaryTargets = ["native", "linux-musl-arm64-openssl-3.0.x"]
 }
 
 datasource db {
@@ -50,6 +51,7 @@ model Playlist {
   tracks      Track[]
   message     Message  @relation(fields: [message_id], references: [id])
   message_id  String   @unique
+  spotify_id  String?
 }
 
 model Track {
@@ -66,20 +68,21 @@ model Track {
 }
 
 model SpotifyCred {
-  id            String   @id @default(uuid())
+  id            String    @id @default(uuid())
   state         String
   code          String?
   scope         String?
   token_type    String?
   access_token  String?
   expires_in    Int?
+  expires       DateTime?
   refresh_token String?
   name          String?
   avatar        String?
-  user_id       String   @unique
-  user          User     @relation(fields: [user_id], references: [id])
-  creaded_at    DateTime @default(now())
-  updated_at    DateTime @default(now()) @updatedAt
+  user_id       String    @unique
+  user          User      @relation(fields: [user_id], references: [id])
+  creaded_at    DateTime  @default(now())
+  updated_at    DateTime  @default(now()) @updatedAt
 }
 
 enum MessageAuthorType {

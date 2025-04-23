@@ -102,9 +102,19 @@ class DatabasePrisma {
   }
 
   public async getPlaylistById(id: Playlist["id"]) {
-    const playlist = await this.client.playlist.findFirst({ where: { id } });
+    const playlist = await this.client.playlist.findFirst({
+      where: { id },
+      include: {
+        tracks: {
+          where: { spotify_id: { not: null } },
+          take: 5,
+        },
+      },
+    });
 
-    return playlist;
+    return playlist as Playlist & {
+      tracks: Array<Track & { spotify_id: string }>;
+    };
   }
 
   public async createOrUpdateSpotifyCredForUser(
@@ -147,6 +157,7 @@ class DatabasePrisma {
         | "code"
         | "access_token"
         | "expires_in"
+        | "expires"
         | "refresh_token"
         | "token_type"
         | "name"
@@ -166,6 +177,16 @@ class DatabasePrisma {
 
   public async deleteSpotifyCredByUserId(userId: string) {
     await this.client.spotifyCred.delete({ where: { user_id: userId } });
+  }
+
+  public async updatePlaylistById(
+    id: Playlist["id"],
+    patch: Pick<Playlist, "spotify_id">
+  ) {
+    return this.client.playlist.update({
+      where: { id },
+      data: patch,
+    });
   }
 }
 

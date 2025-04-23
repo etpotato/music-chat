@@ -2,9 +2,10 @@ import { SpotifyApi, type Track } from "@spotify/web-api-ts-sdk";
 import type { Track as SuggestedTrack } from "generated/prisma";
 import { randomBytes } from "node:crypto";
 import { getSpotifyBasicAuthToken } from "./utils.server";
+import { appConfig } from "~/lib/app-config/index.server";
 
 const SPOTIFY_SCOPE =
-  "user-read-email user-read-private playlist-modify-public";
+  "user-read-email user-read-private playlist-modify-public playlist-modify-private";
 const SPOTIFY_AUTH_GRANT_TYPE = "authorization_code";
 const SPOTIFY_REFRESH_GRANT_TYPE = "refresh_token";
 
@@ -96,37 +97,37 @@ export class SpotifyService {
     return data;
   }
 
-  // public async refreshUserToken(refreshToken: string) {
-  //   // https://developer.spotify.com/documentation/web-api/tutorials/refreshing-tokens
-  //   const body = new URLSearchParams({
-  //     refresh_token: refreshToken,
-  //     grant_type: SPOTIFY_REFRESH_GRANT_TYPE,
-  //   }).toString();
+  public async refreshUserToken(refreshToken: string) {
+    // https://developer.spotify.com/documentation/web-api/tutorials/refreshing-tokens
+    const body = new URLSearchParams({
+      refresh_token: refreshToken,
+      grant_type: SPOTIFY_REFRESH_GRANT_TYPE,
+    }).toString();
 
-  //   const response = await fetch("https://accounts.spotify.com/api/token", {
-  //     method: "POST",
-  //     headers: {
-  //       "content-type": "application/x-www-form-urlencoded",
-  //       Authorization: getSpotifyBasicAuthToken(
-  //         this.clientId,
-  //         this.clientSecret
-  //       ),
-  //     },
-  //     body,
-  //   });
+    const response = await fetch("https://accounts.spotify.com/api/token", {
+      method: "POST",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        Authorization: getSpotifyBasicAuthToken(
+          this.clientId,
+          this.clientSecret
+        ),
+      },
+      body,
+    });
 
-  //   // TODO: handle errors
-  //   if (!response.ok) {
-  //     throw new Error("refreshUserToken request failed");
-  //   }
+    // TODO: handle errors
+    if (!response.ok) {
+      throw new Error("refreshUserToken request failed");
+    }
 
-  //   const data = (await response.json()) as SpotifyTokenReponse;
+    const data = (await response.json()) as SpotifyTokenReponse;
 
-  //   return data;
-  // }
+    return data;
+  }
 }
 
 export const spotifyService = new SpotifyService(
-  process.env.SPOTIFY_CLIENT_ID as string,
-  process.env.SPOTIFY_CLIENT_SECRET as string
+  appConfig.SPOTIFY_CLIENT_ID,
+  appConfig.SPOTIFY_CLIENT_SECRET
 );
