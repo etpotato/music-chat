@@ -102,7 +102,11 @@ class DatabasePrisma {
     return messages;
   }
 
-  public async getPlaylistById(id: Playlist["id"]) {
+  public async getPlaylistById(id?: Playlist["id"] | null) {
+    if (!id) {
+      return null;
+    }
+
     const playlist = await this.client.playlist.findFirst({
       where: { id },
       include: {
@@ -176,7 +180,11 @@ class DatabasePrisma {
     return result;
   }
 
-  public async deleteSpotifyCredByUserId(userId: string) {
+  public async deleteSpotifyCredByUserId(userId?: string) {
+    if (!userId) {
+      return;
+    }
+
     await this.client.spotifyCred.delete({ where: { user_id: userId } });
   }
 

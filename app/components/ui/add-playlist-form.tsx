@@ -1,14 +1,24 @@
 import { useFetcher } from "react-router";
 import { FormId } from "~/const";
 import { Button } from "./button";
+import { useEffect } from "react";
 
 export type AddPlaylistFromProps = {
   playlistId: string;
 };
 
 export function AddPlaylistForm({ playlistId }: AddPlaylistFromProps) {
-  const fetcher = useFetcher();
+  const fetcher = useFetcher<{ playlistSpotifyId?: string }>();
   const isLoading = fetcher.state !== "idle";
+
+  useEffect(() => {
+    if (fetcher.data?.playlistSpotifyId) {
+      window.open(
+        `https://open.spotify.com/playlist/${fetcher.data.playlistSpotifyId}`,
+        "_blank"
+      );
+    }
+  }, [fetcher.data]);
 
   return (
     <fetcher.Form method="POST" className="max-w-fit">

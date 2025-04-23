@@ -36,7 +36,7 @@ export function Message({ message }: MessageProps) {
                   href={`https://open.spotify.com/playlist/${message.playlist.spotify_id}`}
                   rel="noreferrer noopener"
                   target="_blank"
-                  className="text-green-500 py-2 px-4 inline-block border-1 border-orange-200 rounded-md hover:bg-orange-100"
+                  className="text-green-500 py-1 px-4 inline-block border-1 border-green-500 rounded-md hover:bg-green-500 hover:text-white"
                 >
                   Spotify playlist
                 </a>
@@ -47,7 +47,7 @@ export function Message({ message }: MessageProps) {
               <LoginForm className="w-fit ml-auto" hasDescription />
             )}
           </div>
-          <ul className="grid gap-1 py-2">
+          <ul className="grid gap-1 py-1">
             {message.playlist.tracks.map(({ spotify_id }) => (
               <li key={spotify_id}>
                 <iframe

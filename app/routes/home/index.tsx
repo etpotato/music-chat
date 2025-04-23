@@ -6,7 +6,6 @@ import { FormId } from "~/const";
 import type { Route } from "./+types";
 import { AuthProvider } from "~/context/AuthContext";
 import { AppLayout } from "~/components/ui/app-layout";
-import { getUserFromSession } from "~/lib/use-case/get-user-from-session.server";
 import { loginSpotify } from "~/lib/use-case/login-spotify.server";
 import { getOrCreateUserById } from "~/lib/use-case/get-or-create-user-by-id.server";
 
@@ -22,14 +21,12 @@ export async function action({ request }: Route.ActionArgs) {
   const formId = formData.get("id");
   const session = await getSession(request.headers.get("Cookie"));
 
-  const user = await getUserFromSession(session);
-
   if (formId === FormId.LoginSpotify) {
-    return loginSpotify(user.id, session);
+    return loginSpotify(session);
   }
 
   if (formId === FormId.LogoutSpotify) {
-    await database.deleteSpotifyCredByUserId(user.id);
+    await database.deleteSpotifyCredByUserId(session.get("user_id"));
     return;
   }
 }

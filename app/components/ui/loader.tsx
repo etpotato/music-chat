@@ -23,9 +23,9 @@ export function Loader({
     >
       <circle
         fill="none"
-        stroke-opacity="1"
+        strokeOpacity="1"
         stroke="#000000"
-        stroke-width=".5"
+        strokeWidth=".5"
         cx="100"
         cy="100"
         r="0"

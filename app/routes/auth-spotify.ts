@@ -5,8 +5,8 @@ import { database } from "~/lib/database/index.server";
 import { data, redirect } from "react-router";
 import { StatusCodes } from "http-status-codes";
 import { spotifyService } from "~/lib/spotify/index.server";
-import { SpotifyWithUserCred } from "~/lib/spotify/with-user-cred.server";
 import { appConfig } from "~/lib/app-config/index.server";
+import { SpotifyUserService } from "~/lib/spotify/spotify-user-service.server";
 
 export async function loader({ request }: Route.LoaderArgs) {
   const uSession = await userSession.getSession(request.headers.get("Cookie"));
@@ -46,17 +46,14 @@ export async function loader({ request }: Route.LoaderArgs) {
     code
   );
 
-  const spotifyWithUserCred = new SpotifyWithUserCred(
-    appConfig.SPOTIFY_CLIENT_ID,
-    tokenData
-  );
-  const profile = await spotifyWithUserCred.getUserInfo();
+  const spotifyUserService = new SpotifyUserService(tokenData, userId);
+  const { name, avatar } = await spotifyUserService.getUserInfo();
 
   await database.updateSpotifyCredByUserId(user.id, {
     ...tokenData,
     expires: new Date(Date.now() + tokenData.expires_in * 1000),
-    name: profile.display_name,
-    avatar: profile.images[0]?.url,
+    name,
+    avatar,
   });
 
   const lastActiveChatId = chatSession.get("last_active_chat_id");

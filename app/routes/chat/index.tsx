@@ -1,4 +1,4 @@
-import { data, redirect, useFetcher } from "react-router";
+import { data, redirect, useActionData, useFetcher } from "react-router";
 import { database } from "~/lib/database/index.server";
 import type { Route } from "./+types/index";
 import { StatusCodes } from "http-status-codes";
@@ -38,7 +38,7 @@ export async function action({ request, params }: Route.ActionArgs) {
   const formId = formData.get("id");
 
   if (formId === FormId.LoginSpotify) {
-    return loginSpotify(chatId, session);
+    return loginSpotify(session);
   }
 
   if (formId === FormId.Message) {
@@ -58,8 +58,14 @@ export async function action({ request, params }: Route.ActionArgs) {
   }
 
   if (formId === FormId.AddPlaylist) {
-    await addPlaylist(formData.get("playlist_id") as string | null, session);
-    return;
+    const playlistSpotifyId = await addPlaylist(
+      formData.get("playlist_id") as string | null,
+      session
+    );
+
+    console.log("playlistSpotifyId", playlistSpotifyId);
+
+    return { playlistSpotifyId };
   }
 }
 
@@ -93,7 +99,6 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 
 export default function Home({ loaderData }: Route.ComponentProps) {
   const { messages, placeholder } = loaderData;
-
   const fetcher = useFetcher();
 
   useEffect(() => {
