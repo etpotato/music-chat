@@ -63,8 +63,6 @@ export async function action({ request, params }: Route.ActionArgs) {
       session
     );
 
-    console.log("playlistSpotifyId", playlistSpotifyId);
-
     return { playlistSpotifyId };
   }
 }

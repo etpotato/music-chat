@@ -8,6 +8,7 @@ import { AuthProvider } from "~/context/AuthContext";
 import { AppLayout } from "~/components/ui/app-layout";
 import { loginSpotify } from "~/lib/use-case/login-spotify.server";
 import { getOrCreateUserById } from "~/lib/use-case/get-or-create-user-by-id.server";
+import { isValidSpotifyToken } from "~/lib/use-case/is-valid-spotify-token.server";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -40,14 +41,9 @@ export async function loader({ request }: Route.LoaderArgs) {
   session.set("user_id", user.id);
 
   const spotify: SpotifyAuth = {
-    isAuthenticated:
-      Boolean(user?.spotify_cred?.access_token) &&
-      Boolean(
-        user?.spotify_cred?.expires_in &&
-          user?.spotify_cred?.expires_in < Date.now()
-      ),
-    name: user?.spotify_cred?.name || undefined,
-    avatar: user?.spotify_cred?.avatar || undefined,
+    isAuthenticated: isValidSpotifyToken(user.spotify_cred),
+    name: user.spotify_cred?.name || undefined,
+    avatar: user.spotify_cred?.avatar || undefined,
   };
 
   const chats = (await database.getUserChats(user.id)) || [];

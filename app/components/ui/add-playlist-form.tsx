@@ -2,6 +2,7 @@ import { useFetcher } from "react-router";
 import { FormId } from "~/const";
 import { Button } from "./button";
 import { useEffect } from "react";
+import { getPlaylistUrl } from "~/utils/spotify";
 
 export type AddPlaylistFromProps = {
   playlistId: string;
@@ -13,10 +14,7 @@ export function AddPlaylistForm({ playlistId }: AddPlaylistFromProps) {
 
   useEffect(() => {
     if (fetcher.data?.playlistSpotifyId) {
-      window.open(
-        `https://open.spotify.com/playlist/${fetcher.data.playlistSpotifyId}`,
-        "_blank"
-      );
+      window.open(getPlaylistUrl(fetcher.data.playlistSpotifyId), "_blank");
     }
   }, [fetcher.data]);
 

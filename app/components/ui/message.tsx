@@ -5,6 +5,7 @@ import { Loader } from "./loader";
 import { useAuthContext } from "~/context/AuthContext";
 import { LoginForm } from "./login-form";
 import { AddPlaylistForm } from "./add-playlist-form";
+import { getEmbeddedTrackUrl, getPlaylistUrl } from "~/utils/spotify";
 
 export type MessageProps = {
   message: Pick<Message, "id" | "text" | "author_type" | "created_at"> & {
@@ -33,12 +34,12 @@ export function Message({ message }: MessageProps) {
             {spotify.isAuthenticated ? (
               message.playlist.spotify_id ? (
                 <a
-                  href={`https://open.spotify.com/playlist/${message.playlist.spotify_id}`}
+                  href={getPlaylistUrl(message.playlist.spotify_id)}
                   rel="noreferrer noopener"
                   target="_blank"
                   className="text-green-500 py-1 px-4 inline-block border-1 border-green-500 rounded-md hover:bg-green-500 hover:text-white"
                 >
-                  Spotify playlist
+                  Open in Spotify
                 </a>
               ) : (
                 <AddPlaylistForm playlistId={message.playlist.id} />
@@ -47,20 +48,22 @@ export function Message({ message }: MessageProps) {
               <LoginForm className="w-fit ml-auto" hasDescription />
             )}
           </div>
-          <ul className="grid gap-1 py-1">
-            {message.playlist.tracks.map(({ spotify_id }) => (
-              <li key={spotify_id}>
-                <iframe
-                  key={spotify_id}
-                  src={`https://open.spotify.com/embed/track/${spotify_id}?utm_source=generator`}
-                  width="100%"
-                  height="80"
-                  frameBorder="0"
-                  allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                  loading="lazy"
-                ></iframe>
-              </li>
-            ))}
+          <ul className="grid gap-1 py-2">
+            {message.playlist.tracks.map(({ spotify_id }) =>
+              spotify_id ? (
+                <li key={spotify_id}>
+                  <iframe
+                    key={spotify_id}
+                    src={getEmbeddedTrackUrl(spotify_id)}
+                    width="100%"
+                    height="80"
+                    frameBorder="0"
+                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                    loading="lazy"
+                  ></iframe>
+                </li>
+              ) : null
+            )}
           </ul>
         </>
       ) : noPlaylist ? (
